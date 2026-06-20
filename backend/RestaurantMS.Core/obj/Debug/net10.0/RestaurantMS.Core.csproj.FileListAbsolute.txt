@@ -1,0 +1,12 @@
+C:\Users\Modern15\RestaurantMS\backend\RestaurantMS.Core\obj\Debug\net10.0\RestaurantMS.Core.csproj.AssemblyReference.cache
+C:\Users\Modern15\RestaurantMS\backend\RestaurantMS.Core\obj\Debug\net10.0\RestaurantMS.Core.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Modern15\RestaurantMS\backend\RestaurantMS.Core\obj\Debug\net10.0\RestaurantMS.Core.AssemblyInfoInputs.cache
+C:\Users\Modern15\RestaurantMS\backend\RestaurantMS.Core\obj\Debug\net10.0\RestaurantMS.Core.AssemblyInfo.cs
+C:\Users\Modern15\RestaurantMS\backend\RestaurantMS.Core\obj\Debug\net10.0\RestaurantMS.Core.csproj.CoreCompileInputs.cache
+C:\Users\Modern15\RestaurantMS\backend\RestaurantMS.Core\bin\Debug\net10.0\RestaurantMS.Core.deps.json
+C:\Users\Modern15\RestaurantMS\backend\RestaurantMS.Core\bin\Debug\net10.0\RestaurantMS.Core.dll
+C:\Users\Modern15\RestaurantMS\backend\RestaurantMS.Core\bin\Debug\net10.0\RestaurantMS.Core.pdb
+C:\Users\Modern15\RestaurantMS\backend\RestaurantMS.Core\obj\Debug\net10.0\RestaurantMS.Core.dll
+C:\Users\Modern15\RestaurantMS\backend\RestaurantMS.Core\obj\Debug\net10.0\refint\RestaurantMS.Core.dll
+C:\Users\Modern15\RestaurantMS\backend\RestaurantMS.Core\obj\Debug\net10.0\RestaurantMS.Core.pdb
+C:\Users\Modern15\RestaurantMS\backend\RestaurantMS.Core\obj\Debug\net10.0\ref\RestaurantMS.Core.dll

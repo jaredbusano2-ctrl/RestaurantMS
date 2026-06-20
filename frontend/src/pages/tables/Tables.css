@@ -1,0 +1,120 @@
+.table-stats {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.table-stat {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-left: 4px solid;
+  border-radius: 8px;
+  padding: 12px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.filter-pills {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.filter-pill {
+  padding: 6px 16px;
+  border-radius: 99px;
+  border: 1px solid #e5e7eb;
+  background: white;
+  font-size: 13px;
+  cursor: pointer;
+  color: #6b7280;
+}
+
+.filter-pill.active {
+  background: #dc2626;
+  color: white;
+  border-color: #dc2626;
+}
+
+.tables-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.table-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-left: 4px solid;
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.table-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.table-number {
+  font-size: 20px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.table-status-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 99px;
+}
+
+.table-capacity {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.table-btn {
+  width: 100%;
+  padding: 8px;
+  font-size: 13px;
+}
+
+.table-card.selected {
+  border-color: #dc2626;
+  background: #fef2f2;
+}
+
+/* Reservation styles */
+.reserved-by {
+  font-size: 12px;
+  color: #92400e;
+  background: #fef3c7;
+  padding: 6px 10px;
+  border-radius: 6px;
+}
+
+.table-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.empty-state-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 60px 20px;
+  background: white;
+  border: 1px dashed #e5e7eb;
+  border-radius: 12px;
+  color: #9ca3af;
+}

@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="RestaurantMS.API/RestaurantMS.API.csproj" />
+  <Project Path="RestaurantMS.Core/RestaurantMS.Core.csproj" />
+  <Project Path="RestaurantMS.Infrastructure/RestaurantMS.Infrastructure.csproj" />
+</Solution>

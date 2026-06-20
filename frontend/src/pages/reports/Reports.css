@@ -1,0 +1,131 @@
+.range-selector {
+  display: flex;
+  gap: 4px;
+  background: #f3f4f6;
+  border-radius: 8px;
+  padding: 4px;
+}
+
+.range-btn {
+  padding: 7px 16px;
+  border-radius: 6px;
+  border: none;
+  background: none;
+  font-size: 13px;
+  cursor: pointer;
+  color: #6b7280;
+  font-weight: 500;
+  transition: all 0.15s;
+}
+
+.range-btn.active {
+  background: white;
+  color: #dc2626;
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.custom-range {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.reports-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.report-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.report-card.full-width {
+  grid-column: 1 / -1;
+}
+
+.report-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.report-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.btn-export {
+  background: none;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 5px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  color: #6b7280;
+  transition: all 0.15s;
+}
+
+.btn-export:hover {
+  background: #f9fafb;
+  color: #111827;
+}
+
+.chart-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  color: #9ca3af;
+  font-size: 14px;
+}
+
+.payment-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #f3f4f6;
+}
+
+.payment-breakdown-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+}
+
+.payment-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.payment-method-name {
+  flex: 1;
+  color: #374151;
+  font-weight: 500;
+}
+
+.payment-count {
+  color: #9ca3af;
+  font-size: 12px;
+}
+
+.payment-amount {
+  font-weight: 600;
+  color: #111827;
+}

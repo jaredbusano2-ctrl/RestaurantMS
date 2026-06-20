@@ -7,7 +7,7 @@ using System.Security.Claims;
 namespace RestaurantMS.API.Controllers
 {
     [ApiController]
-    [Route("api/billing")]
+    [Route("api/[controller]")]
     [Authorize]
     public class BillingController : ControllerBase
     {
@@ -19,88 +19,133 @@ namespace RestaurantMS.API.Controllers
         }
 
         [HttpPost("generate")]
-        [Authorize(Roles = "Cashier,Admin,SuperAdmin")]
         public async Task<IActionResult> GenerateBill([FromBody] GenerateBillDto dto)
         {
             try
             {
-                var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-                var bill = await _billingService.GenerateBillAsync(dto.OrderId, userId);
-                if (bill == null)
-                    return NotFound(ApiResponse<string>.Fail("Order not found."));
-                return Ok(ApiResponse<BillResponseDto>.Ok(bill, "Bill generated."));
+                var cashierId = GetUserId();
+                var result = await _billingService.GenerateBillAsync(dto.OrderId, cashierId);
+                if (result == null)
+                    return BadRequest(new { error = "Failed to generate bill" });
+
+                return Ok(new { data = result });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { error = ex.Message });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { error = ex.Message, inner = ex.InnerException?.Message, stack = ex.StackTrace });
+                return StatusCode(500, new { error = ex.Message });
             }
         }
 
         [HttpPost("discount")]
-        [Authorize(Roles = "Cashier,Admin,SuperAdmin")]
         public async Task<IActionResult> ApplyDiscount([FromBody] ApplyDiscountDto dto)
         {
             try
             {
-                var bill = await _billingService.ApplyDiscountAsync(dto);
-                if (bill == null)
-                    return NotFound(ApiResponse<string>.Fail("Bill not found."));
-                return Ok(ApiResponse<BillResponseDto>.Ok(bill, "Discount applied."));
+                var result = await _billingService.ApplyDiscountAsync(dto);
+                if (result == null)
+                    return BadRequest(new { error = "Failed to apply discount" });
+
+                return Ok(new { data = result });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { error = ex.Message });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { error = ex.Message, inner = ex.InnerException?.Message, stack = ex.StackTrace });
+                return StatusCode(500, new { error = ex.Message });
             }
         }
-
         [HttpPost("pay")]
-        [Authorize(Roles = "Cashier,Admin,SuperAdmin")]
         public async Task<IActionResult> ProcessPayment([FromBody] ProcessPaymentDto dto)
         {
             try
             {
-                var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-                var payment = await _billingService.ProcessPaymentAsync(dto, userId);
-                if (payment == null)
-                    return NotFound(ApiResponse<string>.Fail("Bill not found."));
-                return Ok(ApiResponse<PaymentResponseDto>.Ok(payment, "Payment processed."));
+                var cashierId = GetUserId();
+                var result = await _billingService.ProcessPaymentAsync(dto, cashierId);
+                if (result == null)
+                    return BadRequest(new { error = "Failed to process payment" });
+
+                return Ok(new { data = result });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(new { error = ex.Message });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { error = ex.Message, inner = ex.InnerException?.Message, stack = ex.StackTrace });
+                return StatusCode(500, new { error = "An error occurred while processing payment", details = ex.Message });
             }
         }
 
-        [HttpGet("history")]
-        [Authorize(Roles = "Cashier,Admin,SuperAdmin,Manager,Waiter")]
-        public async Task<IActionResult> GetHistory()
+        // ✅ ADD THIS MISSING ENDPOINT
+        [HttpGet("bill/{billId}/payment")]
+        public async Task<IActionResult> GetPaymentByBillId(int billId)
         {
             try
             {
-                var result = await _billingService.GetPaidBillsAsync();
-                return Ok(ApiResponse<List<BillResponseDto>>.Ok(result));
+                var payment = await _billingService.GetPaymentByBillIdAsync(billId);
+                if (payment == null)
+                    return NotFound(new { error = "No payment found for this bill" });
+
+                return Ok(payment);
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { error = ex.Message, inner = ex.InnerException?.Message, stack = ex.StackTrace });
+                return StatusCode(500, new { error = ex.Message });
             }
         }
 
-        [HttpGet("{id}")]
-        [Authorize(Roles = "Cashier,Admin,SuperAdmin,Manager")]
-        public async Task<IActionResult> GetBill(int id)
+        [HttpGet("bill/{id}")]
+        public async Task<IActionResult> GetBillById(int id)
         {
             try
             {
                 var bill = await _billingService.GetBillByIdAsync(id);
                 if (bill == null)
-                    return NotFound(ApiResponse<string>.Fail("Bill not found."));
-                return Ok(ApiResponse<BillResponseDto>.Ok(bill));
+                    return NotFound(new { error = "Bill not found" });
+
+                return Ok(new { data = bill });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, ApiResponse<string>.Fail(ex.Message));
+                return StatusCode(500, new { error = ex.Message });
             }
+        }
+
+        [HttpGet("paid")]
+        public async Task<IActionResult> GetPaidBills()
+        {
+            try
+            {
+                var bills = await _billingService.GetPaidBillsAsync();
+                return Ok(new { data = bills });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = ex.Message });
+            }
+        }
+
+        private int GetUserId()
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdClaim))
+                throw new UnauthorizedAccessException("User ID not found");
+
+            return int.Parse(userIdClaim);
         }
     }
 }

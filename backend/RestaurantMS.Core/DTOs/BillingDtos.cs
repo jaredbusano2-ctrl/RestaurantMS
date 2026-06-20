@@ -41,5 +41,19 @@ namespace RestaurantMS.Core.DTOs
         public string Status { get; set; } = string.Empty;
         public string? PayMongoReference { get; set; }
         public DateTime CreatedAt { get; set; }
+        public string? Message { get; set; }  // Added for success messages
+    }
+
+    // Add this missing DTO
+    public class PaymentDto
+    {
+        public int Id { get; set; }
+        public int BillId { get; set; }
+        public string Method { get; set; } = string.Empty;
+        public decimal Amount { get; set; }
+        public string Status { get; set; } = string.Empty;
+        public int ProcessedBy { get; set; }
+        public string? PayMongoReference { get; set; }
+        public DateTime CreatedAt { get; set; }
     }
 }

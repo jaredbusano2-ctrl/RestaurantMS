@@ -6,9 +6,10 @@ namespace RestaurantMS.Core.Interfaces
     {
         Task<Bill?> GetByIdAsync(int id);
         Task<Bill?> GetByOrderIdAsync(int orderId);
+        Task<List<Bill>> GetPaidBillsAsync();
         Task AddAsync(Bill bill);
         Task UpdateAsync(Bill bill);
         Task AddPaymentAsync(Payment payment);
-        Task<List<Bill>> GetPaidBillsAsync();
+        Task<Payment?> GetPaymentByBillIdAsync(int billId);
     }
 }

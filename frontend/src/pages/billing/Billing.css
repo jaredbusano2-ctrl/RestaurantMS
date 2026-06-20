@@ -11,6 +11,34 @@
   flex-direction: column;
   gap: 12px;
 }
+.tab-btn {
+  padding: 8px 20px;
+  background: transparent;
+  color: #6b7280;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.tab-btn:hover {
+  background: #f3f4f6;
+}
+
+.tab-btn.active {
+  color: white;
+}
+
+.tab-btn.active-unpaid {
+  background: #2563eb;
+  color: white;
+}
+
+.tab-btn.active-paid {
+  background: #16a34a;
+  color: white;
+}
 
 .billing-section-label {
   font-size: 12px;

@@ -7,31 +7,64 @@ export const useSignalR = (hubUrl, eventHandlers = {}) => {
 
   useEffect(() => {
     const token = localStorage.getItem('token');
-    if (!token) return;
+    if (!token) {
+      console.log('No token found, skipping SignalR connection');
+      return;
+    }
 
+    // Make sure hubUrl starts with / if not already
+    const normalizedHubUrl = hubUrl.startsWith('/') ? hubUrl : `/${hubUrl}`;
+    
     const connection = new signalR.HubConnectionBuilder()
-      .withUrl(`http://localhost:5000${hubUrl}?access_token=${token}`)
-      .withAutomaticReconnect()
-      .configureLogging(signalR.LogLevel.Warning)
+      .withUrl(`http://localhost:5000${normalizedHubUrl}`, {
+        accessTokenFactory: () => localStorage.getItem('token'),
+        transport: signalR.HttpTransportType.WebSocket | signalR.HttpTransportType.LongPolling
+      })
+      .withAutomaticReconnect([0, 2000, 10000, 30000])
+      .configureLogging(signalR.LogLevel.Information)
       .build();
 
+    // Register event handlers
     Object.entries(eventHandlers).forEach(([eventName, handler]) => {
       connection.on(eventName, handler);
     });
 
+    // Start connection
     connection.start()
-      .then(() => setIsConnected(true))
-      .catch(err => console.error('SignalR connection error:', err));
+      .then(() => {
+        console.log('✅ SignalR connected successfully!');
+        setIsConnected(true);
+      })
+      .catch(err => {
+        console.error('❌ SignalR connection error:', err);
+        setIsConnected(false);
+      });
 
-    connection.onreconnected(() => setIsConnected(true));
-    connection.onclose(() => setIsConnected(false));
+    // Reconnection handlers
+    connection.onreconnecting((error) => {
+      console.log('SignalR reconnecting...', error);
+      setIsConnected(false);
+    });
+
+    connection.onreconnected((connectionId) => {
+      console.log('SignalR reconnected with ID:', connectionId);
+      setIsConnected(true);
+    });
+
+    connection.onclose((error) => {
+      console.log('SignalR connection closed:', error);
+      setIsConnected(false);
+    });
 
     connectionRef.current = connection;
 
+    // Cleanup
     return () => {
-      connection.stop();
+      if (connectionRef.current) {
+        connectionRef.current.stop();
+      }
     };
-  }, [hubUrl]);
+  }, [hubUrl]); // Add eventHandlers as dependency if they change
 
   return { connection: connectionRef.current, isConnected };
 };

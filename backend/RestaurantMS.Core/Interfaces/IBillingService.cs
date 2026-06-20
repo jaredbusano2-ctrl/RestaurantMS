@@ -9,5 +9,6 @@ namespace RestaurantMS.Core.Interfaces
         Task<PaymentResponseDto?> ProcessPaymentAsync(ProcessPaymentDto dto, int cashierId);
         Task<BillResponseDto?> GetBillByIdAsync(int id);
         Task<List<BillResponseDto>> GetPaidBillsAsync();
+        Task<PaymentDto?> GetPaymentByBillIdAsync(int billId);
     }
 }

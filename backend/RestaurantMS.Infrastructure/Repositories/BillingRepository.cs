@@ -50,17 +50,25 @@ namespace RestaurantMS.Infrastructure.Repositories
             await _context.Payments.AddAsync(payment);
             await _context.SaveChangesAsync();
         }
+
         public async Task<List<Bill>> GetPaidBillsAsync()
-{
-    return await _context.Bills
-        .Include(b => b.Order)
-            .ThenInclude(o => o.Table)
-        .Include(b => b.Order)
-            .ThenInclude(o => o.Waiter)
-        .Include(b => b.Payment)
-        .Where(b => b.Status == "Paid")
-        .OrderByDescending(b => b.CreatedAt)
-        .ToListAsync();
-}
+        {
+            return await _context.Bills
+                .Include(b => b.Order)
+                    .ThenInclude(o => o.Table)
+                .Include(b => b.Order)
+                    .ThenInclude(o => o.Waiter)
+                .Include(b => b.Payment)
+                .Where(b => b.Status == "Paid")
+                .OrderByDescending(b => b.CreatedAt)
+                .ToListAsync();
+        }
+
+        // ← ADD THIS MISSING METHOD
+        public async Task<Payment?> GetPaymentByBillIdAsync(int billId)
+        {
+            return await _context.Payments
+                .FirstOrDefaultAsync(p => p.BillId == billId);
+        }
     }
 }

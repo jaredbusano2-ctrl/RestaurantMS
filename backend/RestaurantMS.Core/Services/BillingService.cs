@@ -138,15 +138,13 @@ namespace RestaurantMS.Core.Services
 
             await _billingRepository.AddPaymentAsync(payment);
 
-            // 6. Update bill status
             bill.Status = "Paid";
             await _billingRepository.UpdateAsync(bill);
 
-            // 7. ✅ CRITICAL: Update order status to "Completed"
             var order = await _orderRepository.GetByIdAsync(bill.OrderId);
             if (order != null)
             {
-                order.Status = "Completed";  // This removes it from "Served" list
+                order.Status = "Completed";
                 order.UpdatedAt = DateTime.UtcNow;
                 await _orderRepository.UpdateAsync(order);
                 Console.WriteLine($"✅ Order #{order.Id} status updated to 'Completed'");
@@ -174,6 +172,11 @@ namespace RestaurantMS.Core.Services
             return bills.Select(b => MapToDto(b, b.Order?.Table?.TableNumber ?? "")).ToList();
         }
 
+        public async Task<bool> DeleteBillAsync(int id)
+        {
+            return await _billingRepository.DeleteAsync(id);
+        }
+
         public async Task<BillResponseDto?> GetBillByIdAsync(int id)
         {
             var bill = await _billingRepository.GetByIdAsync(id);
@@ -193,5 +196,10 @@ namespace RestaurantMS.Core.Services
             Status = b.Status,
             CreatedAt = b.CreatedAt
         };
+
+        public async Task<int> DeleteAllPaidBillsAsync()
+        {
+            return await _billingRepository.DeleteAllPaidAsync();
+        }
     }
 }

@@ -10,5 +10,8 @@ namespace RestaurantMS.Core.Interfaces
         Task<BillResponseDto?> GetBillByIdAsync(int id);
         Task<List<BillResponseDto>> GetPaidBillsAsync();
         Task<PaymentDto?> GetPaymentByBillIdAsync(int billId);
+        Task<bool> DeleteBillAsync(int id);
+        Task<int> DeleteAllPaidBillsAsync();
+
     }
 }

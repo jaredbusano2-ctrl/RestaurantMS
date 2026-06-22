@@ -90,7 +90,6 @@ namespace RestaurantMS.API.Controllers
             }
         }
 
-        // ✅ ADD THIS MISSING ENDPOINT
         [HttpGet("bill/{billId}/payment")]
         public async Task<IActionResult> GetPaymentByBillId(int billId)
         {
@@ -147,5 +146,36 @@ namespace RestaurantMS.API.Controllers
 
             return int.Parse(userIdClaim);
         }
+        [HttpDelete("{id:int}")]
+        public async Task<IActionResult> DeleteBill(int id)
+        {
+            try
+            {
+                var result = await _billingService.DeleteBillAsync(id);
+                if (!result)
+                    return NotFound(new { error = "Bill not found" });
+
+                return Ok(new { message = "Bill deleted successfully" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = ex.Message });
+            }
+        }
+
+        [HttpDelete("paid")]
+        public async Task<IActionResult> DeleteAllPaidBills()
+        {
+            try
+            {
+                var count = await _billingService.DeleteAllPaidBillsAsync();
+                return Ok(new { message = $"{count} paid bill(s) deleted successfully", count });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = ex.Message });
+            }
+        }
+
     }
 }

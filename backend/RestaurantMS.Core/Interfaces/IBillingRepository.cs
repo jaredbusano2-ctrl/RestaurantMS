@@ -11,5 +11,7 @@ namespace RestaurantMS.Core.Interfaces
         Task UpdateAsync(Bill bill);
         Task AddPaymentAsync(Payment payment);
         Task<Payment?> GetPaymentByBillIdAsync(int billId);
+        Task<bool> DeleteAsync(int id);
+        Task<int> DeleteAllPaidAsync();
     }
 }

@@ -19,6 +19,11 @@ const BillView = () => {
   const [error, setError] = useState(null);
   const [paymentSuccess, setPaymentSuccess] = useState(null);
   const [viewMode, setViewMode] = useState("unpaid");
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteSuccessMsg, setDeleteSuccessMsg] = useState(null);
+  const [deleteAllConfirm, setDeleteAllConfirm] = useState(false);
+  const [deletingAll, setDeletingAll] = useState(false);
 
   // Wrap fetchOrders in useCallback to prevent unnecessary re-renders
   const fetchOrders = useCallback(async () => {
@@ -47,6 +52,13 @@ const BillView = () => {
       setPaidLoading(false);
     }
   }, []);
+
+  useEffect(() => {
+    if (deleteSuccessMsg) {
+      const timer = setTimeout(() => setDeleteSuccessMsg(null), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [deleteSuccessMsg]);
 
   // useEffect with proper dependencies
   useEffect(() => {
@@ -112,7 +124,7 @@ const BillView = () => {
     // Check if payment already exists
     try {
       const checkRes = await axiosInstance.get(
-        `/api/billing/bill/${bill.id}/payment`
+        `/api/billing/bill/${bill.id}/payment`,
       );
       if (checkRes.data) {
         setPaymentSuccess({
@@ -143,7 +155,7 @@ const BillView = () => {
       (!cashTendered || parseFloat(cashTendered) < bill.total)
     ) {
       setError(
-        `Please enter sufficient cash amount (minimum: ₱${bill.total.toFixed(2)})`
+        `Please enter sufficient cash amount (minimum: ₱${bill.total.toFixed(2)})`,
       );
       setPayLoading(false);
       return;
@@ -176,7 +188,7 @@ const BillView = () => {
         // Refresh bill data
         try {
           const updatedBill = await axiosInstance.get(
-            `/api/billing/bill/${bill.id}`
+            `/api/billing/bill/${bill.id}`,
           );
           setBill(updatedBill.data.data);
         } catch (refreshErr) {
@@ -192,7 +204,7 @@ const BillView = () => {
       } else if (err.response?.status === 400) {
         setError(
           err.response?.data?.error ||
-            "Invalid payment request. Please check the amount."
+            "Invalid payment request. Please check the amount.",
         );
       } else if (err.response?.data?.error) {
         setError(err.response.data.error);
@@ -201,6 +213,45 @@ const BillView = () => {
       }
     } finally {
       setPayLoading(false);
+    }
+  };
+
+  const confirmDeleteBill = (billId) => {
+    setDeleteConfirm(billId);
+  };
+
+  const handleDeleteBill = async () => {
+    if (!deleteConfirm) return;
+    setDeleting(true);
+    try {
+      await axiosInstance.delete(`/api/billing/${deleteConfirm}`);
+      await fetchPaidBills();
+      setDeleteConfirm(null);
+      setDeleteSuccessMsg("Bill deleted successfully.");
+    } catch (err) {
+      console.error("Error deleting bill:", err);
+      setError(err.response?.data?.error || "Failed to delete bill");
+      setDeleteConfirm(null);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handleDeleteAllPaidBills = async () => {
+    setDeletingAll(true);
+    try {
+      const res = await axiosInstance.delete("/api/billing/paid");
+      await fetchPaidBills();
+      setDeleteAllConfirm(false);
+      setDeleteSuccessMsg(
+        `${res.data.count} paid bill(s) deleted successfully.`,
+      );
+    } catch (err) {
+      console.error("Error deleting all paid bills:", err);
+      setError(err.response?.data?.error || "Failed to delete paid bills");
+      setDeleteAllConfirm(false);
+    } finally {
+      setDeletingAll(false);
     }
   };
 
@@ -369,17 +420,41 @@ const BillView = () => {
             <>
               <div
                 className="billing-section-label"
-                style={{ background: "#d1fae5", color: "#16a34a" }}
+                style={{
+                  background: "#d1fae5",
+                  color: "#16a34a",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
               >
-                ✅ PAID BILLS
-                <span
-                  className="billing-count"
-                  style={{ background: "#16a34a" }}
-                >
-                  {paidBills.length}
-                </span>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  ✅ PAID BILLS
+                  <span
+                    className="billing-count"
+                    style={{ background: "#16a34a" }}
+                  >
+                    {paidBills.length}
+                  </span>
+                </div>
+                {paidBills.length > 0 && (
+                  <button
+                    onClick={() => setDeleteAllConfirm(true)}
+                    style={{
+                      background: "#dc2626",
+                      color: "white",
+                      border: "none",
+                      borderRadius: 6,
+                      padding: "4px 10px",
+                      fontSize: 12,
+                      fontWeight: 600,
+                      cursor: "pointer",
+                    }}
+                  >
+                    🗑 Delete All
+                  </button>
+                )}
               </div>
-
               {paidLoading ? (
                 <div className="loading">Loading paid bills...</div>
               ) : paidBills.length === 0 ? (
@@ -444,14 +519,46 @@ const BillView = () => {
                     </div>
                     <div
                       className="billing-order-total"
-                      style={{ borderTop: "none", paddingTop: 0 }}
+                      style={{
+                        borderTop: "none",
+                        paddingTop: 0,
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                      }}
                     >
                       <span style={{ fontSize: 12, color: "#6b7280" }}>
                         {new Date(bill.createdAt).toLocaleString()}
                       </span>
-                      <span style={{ color: "#16a34a", fontWeight: 600 }}>
-                        ✓ PAID
-                      </span>
+                      <div
+                        style={{
+                          display: "flex",
+                          gap: 8,
+                          alignItems: "center",
+                        }}
+                      >
+                        <span style={{ color: "#16a34a", fontWeight: 600 }}>
+                          ✓ PAID
+                        </span>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            confirmDeleteBill(bill.id);
+                          }}
+                          style={{
+                            background: "#fee2e2",
+                            color: "#dc2626",
+                            border: "none",
+                            borderRadius: 6,
+                            padding: "4px 10px",
+                            fontSize: 12,
+                            fontWeight: 600,
+                            cursor: "pointer",
+                          }}
+                        >
+                          🗑 Delete
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))
@@ -781,6 +888,247 @@ const BillView = () => {
           )}
         </div>
       </div>
+      {deleteConfirm && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: "rgba(0,0,0,0.5)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1000,
+          }}
+          onClick={() => !deleting && setDeleteConfirm(null)}
+        >
+          <div
+            style={{
+              background: "white",
+              borderRadius: 12,
+              padding: 28,
+              width: 360,
+              boxShadow: "0 10px 40px rgba(0,0,0,0.2)",
+              textAlign: "center",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div
+              style={{
+                width: 56,
+                height: 56,
+                background: "#fee2e2",
+                borderRadius: "50%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: 28,
+                margin: "0 auto 16px",
+              }}
+            >
+              🗑
+            </div>
+            <h3 style={{ margin: "0 0 8px", fontSize: 18, color: "#111827" }}>
+              Delete this bill?
+            </h3>
+            <p style={{ margin: "0 0 24px", fontSize: 14, color: "#6b7280" }}>
+              This will permanently remove the bill and its payment record. This
+              action cannot be undone.
+            </p>
+            <div style={{ display: "flex", gap: 10 }}>
+              <button
+                onClick={() => setDeleteConfirm(null)}
+                disabled={deleting}
+                style={{
+                  flex: 1,
+                  padding: "10px 0",
+                  background: "#f3f4f6",
+                  color: "#374151",
+                  border: "none",
+                  borderRadius: 8,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteBill}
+                disabled={deleting}
+                style={{
+                  flex: 1,
+                  padding: "10px 0",
+                  background: "#dc2626",
+                  color: "white",
+                  border: "none",
+                  borderRadius: 8,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  opacity: deleting ? 0.7 : 1,
+                }}
+              >
+                {deleting ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {deleteAllConfirm && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: "rgba(0,0,0,0.5)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1000,
+          }}
+          onClick={() => !deletingAll && setDeleteAllConfirm(false)}
+        >
+          <div
+            style={{
+              background: "white",
+              borderRadius: 12,
+              padding: 28,
+              width: 380,
+              boxShadow: "0 10px 40px rgba(0,0,0,0.2)",
+              textAlign: "center",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div
+              style={{
+                width: 56,
+                height: 56,
+                background: "#fee2e2",
+                borderRadius: "50%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: 28,
+                margin: "0 auto 16px",
+              }}
+            >
+              🗑
+            </div>
+            <h3 style={{ margin: "0 0 8px", fontSize: 18, color: "#111827" }}>
+              Delete all paid bills?
+            </h3>
+            <p style={{ margin: "0 0 24px", fontSize: 14, color: "#6b7280" }}>
+              This will permanently remove all {paidBills.length} paid bill
+              record(s) and their payments. This action cannot be undone.
+            </p>
+            <div style={{ display: "flex", gap: 10 }}>
+              <button
+                onClick={() => setDeleteAllConfirm(false)}
+                disabled={deletingAll}
+                style={{
+                  flex: 1,
+                  padding: "10px 0",
+                  background: "#f3f4f6",
+                  color: "#374151",
+                  border: "none",
+                  borderRadius: 8,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteAllPaidBills}
+                disabled={deletingAll}
+                style={{
+                  flex: 1,
+                  padding: "10px 0",
+                  background: "#dc2626",
+                  color: "white",
+                  border: "none",
+                  borderRadius: 8,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  opacity: deletingAll ? 0.7 : 1,
+                }}
+              >
+                {deletingAll ? "Deleting..." : "Delete All"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {deleteSuccessMsg && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: "rgba(0,0,0,0.5)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1000,
+          }}
+          onClick={() => setDeleteSuccessMsg(null)}
+        >
+          <div
+            style={{
+              background: "white",
+              borderRadius: 12,
+              padding: 28,
+              width: 320,
+              boxShadow: "0 10px 40px rgba(0,0,0,0.2)",
+              textAlign: "center",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div
+              style={{
+                width: 56,
+                height: 56,
+                background: "#d1fae5",
+                borderRadius: "50%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: 28,
+                margin: "0 auto 16px",
+              }}
+            >
+              ✅
+            </div>
+            <h3 style={{ margin: "0 0 8px", fontSize: 18, color: "#111827" }}>
+              Success
+            </h3>
+            <p style={{ margin: "0 0 20px", fontSize: 14, color: "#6b7280" }}>
+              {deleteSuccessMsg}
+            </p>
+            <button
+              onClick={() => setDeleteSuccessMsg(null)}
+              style={{
+                width: "100%",
+                padding: "10px 0",
+                background: "#16a34a",
+                color: "white",
+                border: "none",
+                borderRadius: 8,
+                fontWeight: 600,
+                cursor: "pointer",
+              }}
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      )}
     </MainLayout>
   );
 };

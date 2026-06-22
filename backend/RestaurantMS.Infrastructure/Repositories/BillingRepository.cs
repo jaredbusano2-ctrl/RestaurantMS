@@ -64,11 +64,48 @@ namespace RestaurantMS.Infrastructure.Repositories
                 .ToListAsync();
         }
 
-        // ← ADD THIS MISSING METHOD
         public async Task<Payment?> GetPaymentByBillIdAsync(int billId)
         {
             return await _context.Payments
                 .FirstOrDefaultAsync(p => p.BillId == billId);
+        }
+
+        public async Task<bool> DeleteAsync(int id)
+        {
+            var bill = await _context.Bills
+                .Include(b => b.Payment)
+                .FirstOrDefaultAsync(b => b.Id == id);
+
+            if (bill == null) return false;
+
+            if (bill.Payment != null)
+            {
+                _context.Payments.Remove(bill.Payment);
+            }
+
+            _context.Bills.Remove(bill);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+        
+        public async Task<int> DeleteAllPaidAsync()
+        {
+            var paidBills = await _context.Bills
+                .Include(b => b.Payment)
+                .Where(b => b.Status == "Paid")
+                .ToListAsync();
+
+            foreach (var bill in paidBills)
+            {
+                if (bill.Payment != null)
+                {
+                    _context.Payments.Remove(bill.Payment);
+                }
+            }
+
+            _context.Bills.RemoveRange(paidBills);
+            await _context.SaveChangesAsync();
+            return paidBills.Count;
         }
     }
 }

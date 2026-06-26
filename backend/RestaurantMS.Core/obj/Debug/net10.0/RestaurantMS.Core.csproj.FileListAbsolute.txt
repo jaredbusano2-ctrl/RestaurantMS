@@ -10,3 +10,4 @@ C:\Users\Modern15\RestaurantMS\backend\RestaurantMS.Core\obj\Debug\net10.0\Resta
 C:\Users\Modern15\RestaurantMS\backend\RestaurantMS.Core\obj\Debug\net10.0\refint\RestaurantMS.Core.dll
 C:\Users\Modern15\RestaurantMS\backend\RestaurantMS.Core\obj\Debug\net10.0\RestaurantMS.Core.pdb
 C:\Users\Modern15\RestaurantMS\backend\RestaurantMS.Core\obj\Debug\net10.0\ref\RestaurantMS.Core.dll
+C:\Users\Modern15\RestaurantMS\backend\RestaurantMS.Core\obj\Debug\net10.0\RestaurantMS.Core.sourcelink.json

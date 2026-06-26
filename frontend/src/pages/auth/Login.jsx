@@ -1,8 +1,11 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { FiMail, FiLock, FiEye, FiEyeOff, FiCheckCircle } from 'react-icons/fi';
 import { useAuth } from '../../hooks/useAuth';
 import axiosInstance from '../../utils/axiosInstance';
 import { getDefaultRoute } from '../../utils/roleGuard';
+import Button from '../../components/Button/Button';
 import './Login.css';
 
 const Login = () => {
@@ -34,79 +37,201 @@ const Login = () => {
     }
   };
 
+  // Animation variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+        delayChildren: 0.2,
+      },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { type: 'spring', damping: 25, stiffness: 200 },
+    },
+  };
+
+  const logoVariants = {
+    hidden: { scale: 0, rotate: -180 },
+    visible: {
+      scale: 1,
+      rotate: 0,
+      transition: { type: 'spring', damping: 20, stiffness: 300, delay: 0.1 },
+    },
+  };
+
+  const features = [
+    { icon: '⚡', text: 'Fast & efficient order management' },
+    { icon: '👨‍🍳', text: 'Real-time kitchen display' },
+    { icon: '💳', text: 'Smart billing & payments' },
+    { icon: '📦', text: 'Inventory tracking' },
+  ];
+
   return (
     <div className="login-wrapper">
-      <div className="login-left">
+      {/* Left Panel - Brand & Features */}
+      <motion.div
+        className="login-left"
+        initial={{ opacity: 0, x: -50 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.8, ease: 'easeOut' }}
+      >
         <div className="login-left-content">
-          <div className="login-logo">
-            <span>F</span>
-          </div>
-          <h1>FlavorRush</h1>
-          <p className="login-tagline">Restaurant Management System</p>
-          <div className="login-features">
-            <div className="login-feature">✓ Fast & efficient order management</div>
-            <div className="login-feature">✓ Real-time kitchen display</div>
-            <div className="login-feature">✓ Smart billing & payments</div>
-            <div className="login-feature">✓ Inventory tracking</div>
-          </div>
-        </div>
-      </div>
+          <motion.div
+            className="login-logo"
+            variants={logoVariants}
+            initial="hidden"
+            animate="visible"
+          >
+            <span>🍽️</span>
+          </motion.div>
 
-      <div className="login-right">
-        <div className="login-form-box">
-          <h2>Welcome back</h2>
-          <p className="login-subtitle">Sign in to your account</p>
+          <motion.div variants={containerVariants} initial="hidden" animate="visible">
+            <motion.h1 variants={itemVariants} className="login-brand-name">
+              FlavorRush
+            </motion.h1>
+            <motion.p variants={itemVariants} className="login-tagline">
+              Restaurant Management System
+            </motion.p>
+
+            <motion.div variants={itemVariants} className="login-features">
+              {features.map((feature, idx) => (
+                <motion.div
+                  key={idx}
+                  className="login-feature"
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.3 + idx * 0.1 }}
+                >
+                  <span className="feature-icon">{feature.icon}</span>
+                  <span>{feature.text}</span>
+                </motion.div>
+              ))}
+            </motion.div>
+
+            <motion.div
+              variants={itemVariants}
+              className="login-testimonial"
+            >
+              <p className="testimonial-text">
+                "Streamline your restaurant operations with our comprehensive management system."
+              </p>
+            </motion.div>
+          </motion.div>
+        </div>
+
+        {/* Decorative Elements */}
+        <div className="login-decoration login-decoration-1"></div>
+        <div className="login-decoration login-decoration-2"></div>
+        <div className="login-decoration login-decoration-3"></div>
+      </motion.div>
+
+      {/* Right Panel - Login Form */}
+      <motion.div
+        className="login-right"
+        initial={{ opacity: 0, x: 50 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.8, ease: 'easeOut' }}
+      >
+        <motion.div
+          className="login-form-box"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+        >
+          <motion.div variants={itemVariants} className="login-form-header">
+            <h2>Welcome Back</h2>
+            <p className="login-subtitle">Sign in to your restaurant account</p>
+          </motion.div>
 
           {error && (
-            <div className="login-error">
+            <motion.div
+              className="login-error"
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+            >
+              <span className="error-icon">⚠️</span>
               {error}
-            </div>
+            </motion.div>
           )}
 
-          <form onSubmit={handleSubmit}>
-            <div className="form-group">
+          <motion.form onSubmit={handleSubmit} variants={itemVariants} className="login-form">
+            {/* Email Field */}
+            <motion.div variants={itemVariants} className="form-group">
               <label className="form-label">Email Address</label>
-              <input
-                type="email"
-                className="form-input"
-                placeholder="Enter your email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
+              <div className="form-input-wrapper">
+                <FiMail className="form-icon" />
+                <input
+                  type="email"
+                  className="form-input"
+                  placeholder="your@email.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </div>
+            </motion.div>
 
-            <div className="form-group">
+            {/* Password Field */}
+            <motion.div variants={itemVariants} className="form-group">
               <label className="form-label">Password</label>
-              <div className="password-wrapper">
+              <div className="form-input-wrapper">
+                <FiLock className="form-icon" />
                 <input
                   type={showPassword ? 'text' : 'password'}
                   className="form-input"
-                  placeholder="Enter your password"
+                  placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
                 />
-                <button
+                <motion.button
                   type="button"
                   className="password-toggle"
                   onClick={() => setShowPassword(!showPassword)}
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
                 >
-                  {showPassword ? '🙈' : '👁️'}
-                </button>
+                  {showPassword ? (
+                    <FiEyeOff size={18} />
+                  ) : (
+                    <FiEye size={18} />
+                  )}
+                </motion.button>
               </div>
-            </div>
+            </motion.div>
 
-            <button
-              type="submit"
-              className="btn-primary login-btn"
-              disabled={loading}
-            >
-              {loading ? 'Signing in...' : 'Sign In'}
-            </button>
-          </form>
-        </div>
-      </div>
+            {/* Submit Button */}
+            <motion.div variants={itemVariants} className="form-group">
+              <Button
+                type="submit"
+                variant="primary"
+                size="lg"
+                fullWidth
+                loading={loading}
+                disabled={loading}
+              >
+                {loading ? 'Signing In...' : 'Sign In'}
+              </Button>
+            </motion.div>
+          </motion.form>
+
+          {/* Footer */}
+          <motion.div variants={itemVariants} className="login-footer">
+            <p className="login-help-text">
+               •FLAVOR RUSH• 
+            </p>
+          </motion.div>
+        </motion.div>
+      </motion.div>
     </div>
   );
 };

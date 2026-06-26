@@ -48,3 +48,4 @@ C:\Users\Modern15\RestaurantMS\backend\RestaurantMS.API\bin\Debug\net10.0\Restau
 C:\Users\Modern15\RestaurantMS\backend\RestaurantMS.API\obj\Debug\net10.0\Restaura.21AA34F7.Up2Date
 C:\Users\Modern15\RestaurantMS\backend\RestaurantMS.API\obj\Debug\net10.0\RestaurantMS.API.genruntimeconfig.cache
 C:\Users\Modern15\RestaurantMS\backend\RestaurantMS.API\obj\Debug\net10.0\ref\RestaurantMS.API.dll
+C:\Users\Modern15\RestaurantMS\backend\RestaurantMS.API\obj\Debug\net10.0\RestaurantMS.API.sourcelink.json

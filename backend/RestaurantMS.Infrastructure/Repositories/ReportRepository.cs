@@ -18,7 +18,7 @@ namespace RestaurantMS.Infrastructure.Repositories
         {
             var payments = await _context.Payments
                 .Include(p => p.Bill)
-                .Where(p => p.Status == "Completed" && p.CreatedAt >= from && p.CreatedAt <= to)
+                .Where(p => p.Status == "Completed" && p.CreatedAt.Date >= from.Date && p.CreatedAt.Date <= to.Date)
                 .ToListAsync();
 
             return payments
@@ -58,7 +58,7 @@ namespace RestaurantMS.Infrastructure.Repositories
         public async Task<List<PaymentMethodSummaryDto>> GetPaymentMethodSummaryAsync(DateTime from, DateTime to)
         {
             var payments = await _context.Payments
-                .Where(p => p.Status == "Completed" && p.CreatedAt >= from && p.CreatedAt <= to)
+                .Where(p => p.Status == "Completed" && p.CreatedAt.Date >= from.Date && p.CreatedAt.Date <= to.Date)
                 .ToListAsync();
 
             return payments

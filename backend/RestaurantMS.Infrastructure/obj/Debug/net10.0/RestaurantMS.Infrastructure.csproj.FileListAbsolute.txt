@@ -15,3 +15,4 @@ C:\Users\Modern15\RestaurantMS\backend\RestaurantMS.Infrastructure\obj\Debug\net
 C:\Users\Modern15\RestaurantMS\backend\RestaurantMS.Infrastructure\obj\Debug\net10.0\RestaurantMS.Infrastructure.pdb
 C:\Users\Modern15\RestaurantMS\backend\RestaurantMS.Infrastructure\obj\Debug\net10.0\RestaurantMS.Infrastructure.genruntimeconfig.cache
 C:\Users\Modern15\RestaurantMS\backend\RestaurantMS.Infrastructure\obj\Debug\net10.0\ref\RestaurantMS.Infrastructure.dll
+C:\Users\Modern15\RestaurantMS\backend\RestaurantMS.Infrastructure\obj\Debug\net10.0\RestaurantMS.Infrastructure.sourcelink.json

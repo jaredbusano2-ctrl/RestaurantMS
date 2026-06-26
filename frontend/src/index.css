@@ -1,70 +1,13 @@
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+/**
+ * Application Root Styles
+ * Import design system and global styles
+ */
 
-body {
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  background: #f8f9fa;
-  color: #111827;
-}
+@import './theme/globals.css';
 
-:root {
-  --color-primary: #dc2626;
-  --color-primary-hover: #b91c1c;
-  --color-bg: #f8f9fa;
-  --color-sidebar: #ffffff;
-  --color-card: #ffffff;
-  --color-border: #e5e7eb;
-  --color-text: #111827;
-  --color-text-secondary: #6b7280;
-  --color-success: #16a34a;
-  --color-warning: #d97706;
-  --color-danger: #dc2626;
-  --color-info: #2563eb;
-  --sidebar-width: 260px;
-}
-
-.btn-primary {
-  background: var(--color-primary);
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.btn-primary:hover {
-  background: var(--color-primary-hover);
-}
-
-.btn-secondary {
-  background: white;
-  color: #374151;
-  border: 1px solid var(--color-border);
-  padding: 10px 20px;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-}
-
-.card {
-  background: var(--color-card);
-  border: 1px solid var(--color-border);
-  border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-}
-
-.loading-screen {
+/* Root element */
+#root {
+  min-height: 100vh;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100vh;
-  font-size: 16px;
-  color: #6b7280;
+  flex-direction: column;
 }

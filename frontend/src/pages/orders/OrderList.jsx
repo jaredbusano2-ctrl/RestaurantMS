@@ -37,12 +37,13 @@ const OrderList = () => {
   const statuses = ['All', 'Pending', 'Cooking', 'Ready', 'Served', 'Cancelled'];
   const filtered = filter === 'All' ? orders : orders.filter(o => o.status === filter);
 
+  // Fix: use backgroundColor (valid CSS property) instead of bg
   const statusColor = {
-    Pending: { bg: '#fef3c7', color: '#92400e' },
-    Cooking: { bg: '#dbeafe', color: '#1e40af' },
-    Ready: { bg: '#d1fae5', color: '#065f46' },
-    Served: { bg: '#f3f4f6', color: '#374151' },
-    Cancelled: { bg: '#fee2e2', color: '#991b1b' },
+    Pending:   { backgroundColor: '#fef3c7', color: '#92400e' },
+    Cooking:   { backgroundColor: '#dbeafe', color: '#1e40af' },
+    Ready:     { backgroundColor: '#d1fae5', color: '#065f46' },
+    Served:    { backgroundColor: '#f3f4f6', color: '#374151' },
+    Cancelled: { backgroundColor: '#fee2e2', color: '#991b1b' },
   };
 
   return (
@@ -116,7 +117,12 @@ const OrderList = () => {
             <div className="modal-body">
               <div className="order-detail-meta">
                 <span>Waiter: <strong>{selected.waiterName}</strong></span>
-                <span>Status: <strong>{selected.status}</strong></span>
+                <span>
+                  Status:{' '}
+                  <span className="status-badge" style={statusColor[selected.status]}>
+                    {selected.status}
+                  </span>
+                </span>
               </div>
               <table className="orders-table" style={{ marginTop: 16 }}>
                 <thead>
@@ -137,23 +143,23 @@ const OrderList = () => {
                 Total: <strong>₱{Number(selected.total || 0).toFixed(2)}</strong>
               </div>
               <div className="order-actions-row">
-  {selected.status === 'Ready' && (
-    <button className="btn-primary" onClick={() => handleStatusUpdate(selected.id, 'Served')}>
-      ✓ Mark as Served
-    </button>
-  )}
-  {selected.status === 'Pending' && (
-    <button className="btn-secondary" onClick={() => handleStatusUpdate(selected.id, 'Cancelled')}>
-      Cancel Order
-    </button>
-  )}
-  {(selected.status === 'Cooking') && (
-    <span style={{ color: '#6b7280', fontSize: 13 }}>⏳ Waiting for kitchen to mark this order ready</span>
-  )}
-  {(selected.status === 'Served' || selected.status === 'Cancelled') && (
-    <span style={{ color: '#9ca3af', fontSize: 13 }}>This order is {selected.status.toLowerCase()}.</span>
-  )}
-</div>
+                {selected.status === 'Ready' && (
+                  <button className="btn-primary" onClick={() => handleStatusUpdate(selected.id, 'Served')}>
+                    ✓ Mark as Served
+                  </button>
+                )}
+                {selected.status === 'Pending' && (
+                  <button className="btn-secondary" onClick={() => handleStatusUpdate(selected.id, 'Cancelled')}>
+                    Cancel Order
+                  </button>
+                )}
+                {selected.status === 'Cooking' && (
+                  <span style={{ color: '#6b7280', fontSize: 13 }}>⏳ Waiting for kitchen to mark this order ready</span>
+                )}
+                {(selected.status === 'Served' || selected.status === 'Cancelled') && (
+                  <span style={{ color: '#9ca3af', fontSize: 13 }}>This order is {selected.status.toLowerCase()}.</span>
+                )}
+              </div>
             </div>
           </div>
         </div>

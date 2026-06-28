@@ -1,26 +1,28 @@
-import { useState, useEffect } from 'react';
-import MainLayout from '../../layouts/MainLayout';
-import axiosInstance from '../../utils/axiosInstance';
-import './Tables.css';
+import { useState, useEffect } from "react";
+import MainLayout from "../../layouts/MainLayout";
+import axiosInstance from "../../utils/axiosInstance";
+import "./Tables.css";
 
 const TableMap = () => {
   const [tables, setTables] = useState([]);
-  const [filter, setFilter] = useState('All');
+  const [filter, setFilter] = useState("All");
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [reserveTarget, setReserveTarget] = useState(null);
   const [cancelTarget, setCancelTarget] = useState(null);
-  const [form, setForm] = useState({ tableNumber: '', capacity: 4 });
-  const [reserveName, setReserveName] = useState('');
+  const [form, setForm] = useState({ tableNumber: "", capacity: 4 });
+  const [reserveName, setReserveName] = useState("");
   const [actionLoading, setActionLoading] = useState(null);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
-  useEffect(() => { fetchTables(); }, []);
+  useEffect(() => {
+    fetchTables();
+  }, []);
 
   const fetchTables = async () => {
     setLoading(true);
     try {
-      const res = await axiosInstance.get('/api/tables');
+      const res = await axiosInstance.get("/api/tables");
       setTables(res.data.data || []);
     } catch (err) {
       console.error(err);
@@ -31,15 +33,18 @@ const TableMap = () => {
 
   const updateStatus = async (id, status, reservedBy = null) => {
     setActionLoading(id);
-    setError('');
+    setError("");
     try {
-      await axiosInstance.put(`/api/tables/${id}/status`, { status, reservedBy });
+      await axiosInstance.put(`/api/tables/${id}/status`, {
+        status,
+        reservedBy,
+      });
       await fetchTables();
       setReserveTarget(null);
       setCancelTarget(null);
-      setReserveName('');
+      setReserveName("");
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to update table.');
+      setError(err.response?.data?.message || "Failed to update table.");
     } finally {
       setActionLoading(null);
     }
@@ -47,14 +52,14 @@ const TableMap = () => {
 
   const handleCreate = async (e) => {
     e.preventDefault();
-    setActionLoading('create');
+    setActionLoading("create");
     try {
-      await axiosInstance.post('/api/tables', form);
+      await axiosInstance.post("/api/tables", form);
       setShowAddModal(false);
-      setForm({ tableNumber: '', capacity: 4 });
+      setForm({ tableNumber: "", capacity: 4 });
       fetchTables();
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to create table.');
+      setError(err.response?.data?.message || "Failed to create table.");
     } finally {
       setActionLoading(null);
     }
@@ -63,26 +68,27 @@ const TableMap = () => {
   const handleReserveSubmit = (e) => {
     e.preventDefault();
     if (!reserveName.trim()) return;
-    updateStatus(reserveTarget.id, 'Reserved', reserveName.trim());
+    updateStatus(reserveTarget.id, "Reserved", reserveName.trim());
   };
 
-  const filtered = filter === 'All' ? tables : tables.filter(t => t.status === filter);
+  const filtered =
+    filter === "All" ? tables : tables.filter((t) => t.status === filter);
 
   const statusColor = {
-    Available: '#16a34a',
-    Occupied: '#dc2626',
-    Reserved: '#d97706',
+    Available: "#16a34a",
+    Occupied: "#dc2626",
+    Reserved: "#d97706",
   };
   const statusBg = {
-    Available: '#d1fae5',
-    Occupied: '#fee2e2',
-    Reserved: '#fef3c7',
+    Available: "#d1fae5",
+    Occupied: "#fee2e2",
+    Reserved: "#fef3c7",
   };
 
   const counts = {
-    Available: tables.filter(t => t.status === 'Available').length,
-    Occupied: tables.filter(t => t.status === 'Occupied').length,
-    Reserved: tables.filter(t => t.status === 'Reserved').length,
+    Available: tables.filter((t) => t.status === "Available").length,
+    Occupied: tables.filter((t) => t.status === "Occupied").length,
+    Reserved: tables.filter((t) => t.status === "Reserved").length,
   };
 
   return (
@@ -92,30 +98,44 @@ const TableMap = () => {
           <h1 className="page-title">Table Management</h1>
           <p className="page-subtitle">Monitor and manage restaurant tables</p>
         </div>
-        <div style={{ display: 'flex', gap: 10 }}>
-          <button className="btn-secondary" onClick={fetchTables}>↻ Refresh</button>
-          <button className="btn-primary" onClick={() => setShowAddModal(true)}>+ Add Table</button>
+        <div style={{ display: "flex", gap: 10 }}>
+          <button className="btn-secondary" onClick={fetchTables}>
+            <i className="ti ti-refresh" aria-hidden="true"></i> Refresh
+          </button>
+          <button className="btn-primary" onClick={() => setShowAddModal(true)}>
+            + Add Table
+          </button>
         </div>
       </div>
 
       <div className="table-stats">
-        <div className="table-stat" style={{ borderColor: '#16a34a' }}>
-          <span style={{ color: '#16a34a', fontWeight: 700, fontSize: 24 }}>{counts.Available}</span>
-          <span>Available</span>
+        <div className="table-stat">
+          <div className="table-stat-num" style={{ color: "#16a34a" }}>
+            {counts.Available}
+          </div>
+          <div className="table-stat-label">Available</div>
         </div>
-        <div className="table-stat" style={{ borderColor: '#dc2626' }}>
-          <span style={{ color: '#dc2626', fontWeight: 700, fontSize: 24 }}>{counts.Occupied}</span>
-          <span>Occupied</span>
+        <div className="table-stat">
+          <div className="table-stat-num" style={{ color: "#dc2626" }}>
+            {counts.Occupied}
+          </div>
+          <div className="table-stat-label">Occupied</div>
         </div>
-        <div className="table-stat" style={{ borderColor: '#d97706' }}>
-          <span style={{ color: '#d97706', fontWeight: 700, fontSize: 24 }}>{counts.Reserved}</span>
-          <span>Reserved</span>
+        <div className="table-stat">
+          <div className="table-stat-num" style={{ color: "#d97706" }}>
+            {counts.Reserved}
+          </div>
+          <div className="table-stat-label">Reserved</div>
         </div>
       </div>
 
       <div className="filter-pills">
-        {['All', 'Available', 'Occupied', 'Reserved'].map(f => (
-          <button key={f} className={`filter-pill ${filter === f ? 'active' : ''}`} onClick={() => setFilter(f)}>
+        {["All", "Available", "Occupied", "Reserved"].map((f) => (
+          <button
+            key={f}
+            className={`filter-pill ${filter === f ? "active" : ""}`}
+            onClick={() => setFilter(f)}
+          >
             {f}
           </button>
         ))}
@@ -125,63 +145,93 @@ const TableMap = () => {
         <div className="loading">Loading tables...</div>
       ) : filtered.length === 0 ? (
         <div className="empty-state-box">
-          <span style={{ fontSize: 40 }}>🪑</span>
-          <p>No {filter !== 'All' ? filter.toLowerCase() : ''} tables found.</p>
+          <i
+            className="ti ti-armchair"
+            style={{ fontSize: 40, color: "#d1d5db" }}
+            aria-hidden="true"
+          ></i>
+          <i
+            className="ti ti-armchair"
+            style={{ fontSize: 40, color: "#d1d5db" }}
+            aria-hidden="true"
+          ></i>
+          <p>No {filter !== "All" ? filter.toLowerCase() : ""} tables found.</p>
         </div>
       ) : (
         <div className="tables-grid">
-          {filtered.map(table => (
-            <div key={table.id} className="table-card" style={{ borderLeftColor: statusColor[table.status] }}>
+          {filtered.map((table) => (
+            <div
+              key={table.id}
+              className="table-card"
+              style={{ borderLeftColor: statusColor[table.status] }}
+            >
               <div className="table-card-header">
                 <span className="table-number">{table.tableNumber}</span>
-                <span className="table-status-badge" style={{ background: statusBg[table.status], color: statusColor[table.status] }}>
+                <span
+                  className="table-status-badge"
+                  style={{
+                    background: statusBg[table.status],
+                    color: statusColor[table.status],
+                  }}
+                >
                   {table.status}
                 </span>
               </div>
-              <div className="table-capacity">👥 {table.capacity} seats</div>
+              <div className="table-capacity">
+                <i
+                  className="ti ti-users"
+                  style={{ fontSize: 14 }}
+                  aria-hidden="true"
+                ></i>{" "}
+                {table.capacity} seats
+              </div>
 
-              {table.status === 'Reserved' && table.reservedBy && (
-                <div className="reserved-by">📅 Reserved for: <strong>{table.reservedBy}</strong></div>
+              {table.status === "Reserved" && table.reservedBy && (
+                <div className="reserved-by">
+                  <i className="ti ti-calendar" aria-hidden="true"></i> Reserved
+                  for: <strong>{table.reservedBy}</strong>
+                </div>
               )}
 
               {/* Action buttons per status */}
-              {table.status === 'Available' && (
+              {table.status === "Available" && (
                 <div className="table-actions">
                   <button
                     className="btn-primary table-btn"
                     disabled={actionLoading === table.id}
-                    onClick={() => updateStatus(table.id, 'Occupied')}
+                    onClick={() => updateStatus(table.id, "Occupied")}
                   >
-                    {actionLoading === table.id ? '...' : 'Seat Walk-in'}
+                    {actionLoading === table.id ? "..." : "Seat Walk-in"}
                   </button>
                   <button
                     className="btn-secondary table-btn"
                     disabled={actionLoading === table.id}
                     onClick={() => setReserveTarget(table)}
                   >
-                    📅 Reserve
+                    <i className="ti ti-calendar" aria-hidden="true"></i>{" "}
+                    Reserve
                   </button>
                 </div>
               )}
 
-              {table.status === 'Occupied' && (
+              {table.status === "Occupied" && (
                 <button
                   className="btn-secondary table-btn"
                   disabled={actionLoading === table.id}
-                  onClick={() => updateStatus(table.id, 'Available')}
+                  onClick={() => updateStatus(table.id, "Available")}
                 >
-                  {actionLoading === table.id ? '...' : 'Mark Available'}
+                  {actionLoading === table.id ? "..." : "Mark Available"}
                 </button>
               )}
 
-              {table.status === 'Reserved' && (
+              {table.status === "Reserved" && (
                 <div className="table-actions">
                   <button
                     className="btn-primary table-btn"
                     disabled={actionLoading === table.id}
-                    onClick={() => updateStatus(table.id, 'Occupied')}
+                    onClick={() => updateStatus(table.id, "Occupied")}
                   >
-                    {actionLoading === table.id ? '...' : 'Seat Customer'}
+                    {actionLoading === table.id ? "..." : "Seat Customer"}
                   </button>
                   <button
                     className="btn-secondary table-btn"
@@ -200,7 +250,7 @@ const TableMap = () => {
       {/* Add Table Modal */}
       {showAddModal && (
         <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
-          <div className="modal-box" onClick={e => e.stopPropagation()}>
+          <div className="modal-box" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>Add New Table</h3>
               <button onClick={() => setShowAddModal(false)}>✕</button>
@@ -209,16 +259,43 @@ const TableMap = () => {
               {error && <div className="login-error">{error}</div>}
               <div className="form-group">
                 <label className="form-label">Table Number</label>
-                <input className="form-input" placeholder="e.g. T-09" value={form.tableNumber} onChange={e => setForm({ ...form, tableNumber: e.target.value })} required />
+                <input
+                  className="form-input"
+                  placeholder="e.g. T-09"
+                  value={form.tableNumber}
+                  onChange={(e) =>
+                    setForm({ ...form, tableNumber: e.target.value })
+                  }
+                  required
+                />
               </div>
               <div className="form-group">
                 <label className="form-label">Capacity</label>
-                <input className="form-input" type="number" min="1" value={form.capacity} onChange={e => setForm({ ...form, capacity: e.target.value })} required />
+                <input
+                  className="form-input"
+                  type="number"
+                  min="1"
+                  value={form.capacity}
+                  onChange={(e) =>
+                    setForm({ ...form, capacity: e.target.value })
+                  }
+                  required
+                />
               </div>
               <div className="modal-footer">
-                <button type="button" className="btn-secondary" onClick={() => setShowAddModal(false)}>Cancel</button>
-                <button type="submit" className="btn-primary" disabled={actionLoading === 'create'}>
-                  {actionLoading === 'create' ? 'Creating...' : 'Create Table'}
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={() => setShowAddModal(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="btn-primary"
+                  disabled={actionLoading === "create"}
+                >
+                  {actionLoading === "create" ? "Creating..." : "Create Table"}
                 </button>
               </div>
             </form>
@@ -228,11 +305,24 @@ const TableMap = () => {
 
       {/* Reserve Table Modal */}
       {reserveTarget && (
-        <div className="modal-overlay" onClick={() => { setReserveTarget(null); setReserveName(''); }}>
-          <div className="modal-box" onClick={e => e.stopPropagation()}>
-            <div className="modal-header" style={{ background: '#d97706' }}>
+        <div
+          className="modal-overlay"
+          onClick={() => {
+            setReserveTarget(null);
+            setReserveName("");
+          }}
+        >
+          <div className="modal-box" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header" style={{ background: "#d97706" }}>
               <h3>Reserve {reserveTarget.tableNumber}</h3>
-              <button onClick={() => { setReserveTarget(null); setReserveName(''); }}>✕</button>
+              <button
+                onClick={() => {
+                  setReserveTarget(null);
+                  setReserveName("");
+                }}
+              >
+                ✕
+              </button>
             </div>
             <form onSubmit={handleReserveSubmit} className="modal-body">
               {error && <div className="login-error">{error}</div>}
@@ -242,15 +332,31 @@ const TableMap = () => {
                   className="form-input"
                   placeholder="e.g. Maria Santos"
                   value={reserveName}
-                  onChange={e => setReserveName(e.target.value)}
+                  onChange={(e) => setReserveName(e.target.value)}
                   required
                   autoFocus
                 />
               </div>
               <div className="modal-footer">
-                <button type="button" className="btn-secondary" onClick={() => { setReserveTarget(null); setReserveName(''); }}>Cancel</button>
-                <button type="submit" className="btn-primary" style={{ background: '#d97706' }} disabled={actionLoading === reserveTarget.id}>
-                  {actionLoading === reserveTarget.id ? 'Reserving...' : 'Confirm Reservation'}
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={() => {
+                    setReserveTarget(null);
+                    setReserveName("");
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="btn-primary"
+                  style={{ background: "#d97706" }}
+                  disabled={actionLoading === reserveTarget.id}
+                >
+                  {actionLoading === reserveTarget.id
+                    ? "Reserving..."
+                    : "Confirm Reservation"}
                 </button>
               </div>
             </form>
@@ -261,24 +367,37 @@ const TableMap = () => {
       {/* Cancel Reservation Confirm */}
       {cancelTarget && (
         <div className="modal-overlay" onClick={() => setCancelTarget(null)}>
-          <div className="modal-box confirm-modal" onClick={e => e.stopPropagation()}>
-            <div className="modal-header" style={{ background: '#dc2626' }}>
+          <div
+            className="modal-box confirm-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="modal-header" style={{ background: "#dc2626" }}>
               <h3>Cancel Reservation</h3>
               <button onClick={() => setCancelTarget(null)}>✕</button>
             </div>
             <div className="modal-body">
-              <p style={{ color: '#374151', marginBottom: 20 }}>
-                Cancel the reservation for <strong>{cancelTarget.reservedBy}</strong> at <strong>{cancelTarget.tableNumber}</strong>? The table will become Available again.
+              <p style={{ color: "#374151", marginBottom: 20 }}>
+                Cancel the reservation for{" "}
+                <strong>{cancelTarget.reservedBy}</strong> at{" "}
+                <strong>{cancelTarget.tableNumber}</strong>? The table will
+                become Available again.
               </p>
               <div className="modal-footer">
-                <button className="btn-secondary" onClick={() => setCancelTarget(null)}>Keep Reservation</button>
+                <button
+                  className="btn-secondary"
+                  onClick={() => setCancelTarget(null)}
+                >
+                  Keep Reservation
+                </button>
                 <button
                   className="btn-primary"
-                  style={{ background: '#dc2626' }}
+                  style={{ background: "#dc2626" }}
                   disabled={actionLoading === cancelTarget.id}
-                  onClick={() => updateStatus(cancelTarget.id, 'Available')}
+                  onClick={() => updateStatus(cancelTarget.id, "Available")}
                 >
-                  {actionLoading === cancelTarget.id ? 'Cancelling...' : 'Yes, Cancel'}
+                  {actionLoading === cancelTarget.id
+                    ? "Cancelling..."
+                    : "Yes, Cancel"}
                 </button>
               </div>
             </div>

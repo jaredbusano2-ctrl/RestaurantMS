@@ -11,10 +11,12 @@ namespace RestaurantMS.API.Controllers
     public class MenuController : ControllerBase
     {
         private readonly IMenuService _menuService;
+        private readonly IWebHostEnvironment _env;
 
-        public MenuController(IMenuService menuService)
+        public MenuController(IMenuService menuService, IWebHostEnvironment env)
         {
             _menuService = menuService;
+            _env = env;
         }
 
         [HttpGet]
@@ -54,6 +56,42 @@ namespace RestaurantMS.API.Controllers
             {
                 var categories = await _menuService.GetCategoriesAsync();
                 return Ok(ApiResponse<List<MenuCategoryResponseDto>>.Ok(categories));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ApiResponse<string>.Fail(ex.Message));
+            }
+        }
+
+        [HttpPost("upload-image")]
+        [Authorize(Roles = "Admin,SuperAdmin")]
+        public async Task<IActionResult> UploadImage(IFormFile file)
+        {
+            try
+            {
+                if (file == null || file.Length == 0)
+                    return BadRequest(ApiResponse<string>.Fail("No file uploaded."));
+
+                var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp" };
+                var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+                if (!allowedExtensions.Contains(ext))
+                    return BadRequest(ApiResponse<string>.Fail("Only JPG, PNG, and WEBP images are allowed."));
+
+                if (file.Length > 5 * 1024 * 1024)
+                    return BadRequest(ApiResponse<string>.Fail("Image must be under 5MB."));
+
+                var fileName = $"{Guid.NewGuid()}{ext}";
+                var uploadsFolder = Path.Combine(_env.ContentRootPath, "wwwroot", "uploads", "menu");
+                Directory.CreateDirectory(uploadsFolder);
+                var filePath = Path.Combine(uploadsFolder, fileName);
+
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await file.CopyToAsync(stream);
+                }
+
+                var imageUrl = $"/uploads/menu/{fileName}";
+                return Ok(ApiResponse<string>.Ok(imageUrl, "Image uploaded successfully."));
             }
             catch (Exception ex)
             {

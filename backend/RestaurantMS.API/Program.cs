@@ -38,7 +38,6 @@ builder.Services.AddAuthentication(options =>
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret!))
     };
 
-    // Allow SignalR to use JWT from query string
     options.Events = new JwtBearerEvents
     {
         OnMessageReceived = context =>
@@ -90,7 +89,12 @@ builder.Services.AddScoped<IReportService, ReportService>();
 
 var app = builder.Build();
 
+// Ensure uploads directory exists
+var uploadsPath = Path.Combine(builder.Environment.ContentRootPath, "wwwroot", "uploads", "menu");
+Directory.CreateDirectory(uploadsPath);
+
 app.UseCors("AllowReact");
+app.UseStaticFiles(); // serves wwwroot
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

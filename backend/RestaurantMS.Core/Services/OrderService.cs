@@ -9,12 +9,18 @@ namespace RestaurantMS.Core.Services
         private readonly IOrderRepository _orderRepository;
         private readonly IMenuRepository _menuRepository;
         private readonly ITableRepository _tableRepository;
+        private readonly IInventoryRepository _inventoryRepository;
 
-        public OrderService(IOrderRepository orderRepository, IMenuRepository menuRepository, ITableRepository tableRepository)
+        public OrderService(
+            IOrderRepository orderRepository,
+            IMenuRepository menuRepository,
+            ITableRepository tableRepository,
+            IInventoryRepository inventoryRepository)
         {
             _orderRepository = orderRepository;
             _menuRepository = menuRepository;
             _tableRepository = tableRepository;
+            _inventoryRepository = inventoryRepository;
         }
 
         public async Task<List<OrderResponseDto>> GetAllOrdersAsync()
@@ -79,6 +85,14 @@ namespace RestaurantMS.Core.Services
 
             order.Status = status;
             order.UpdatedAt = DateTime.UtcNow;
+
+            // Deduct inventory when kitchen starts cooking, exactly once per order
+            if (status == "Cooking" && !order.InventoryDeducted)
+            {
+                await DeductInventoryForOrderAsync(order);
+                order.InventoryDeducted = true;
+            }
+
             await _orderRepository.UpdateAsync(order);
 
             if (status == "Served")
@@ -92,6 +106,33 @@ namespace RestaurantMS.Core.Services
             }
 
             return true;
+        }
+
+        private async Task DeductInventoryForOrderAsync(Order order)
+        {
+            foreach (var orderItem in order.OrderItems)
+            {
+                var menuItem = await _menuRepository.GetByIdAsync(orderItem.MenuItemId);
+                if (menuItem?.InventoryItemId == null) continue;
+
+                var inventoryItem = await _inventoryRepository.GetByIdAsync(menuItem.InventoryItemId.Value);
+                if (inventoryItem == null) continue;
+
+                var deduction = orderItem.Quantity;
+                inventoryItem.CurrentStock -= deduction;
+                if (inventoryItem.CurrentStock < 0) inventoryItem.CurrentStock = 0;
+                inventoryItem.LastUpdated = DateTime.UtcNow;
+
+                await _inventoryRepository.UpdateAsync(inventoryItem);
+                await _inventoryRepository.AddLogAsync(new InventoryLog
+                {
+                    InventoryItemId = inventoryItem.Id,
+                    ChangeAmount = -deduction,
+                    Reason = $"Order #{order.Id} - {menuItem.Name} x{orderItem.Quantity}",
+                    OrderId = order.Id,
+                    ChangedBy = order.WaiterId
+                });
+            }
         }
 
         private static OrderResponseDto MapToDto(Order o) => new()

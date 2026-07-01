@@ -40,7 +40,8 @@ namespace RestaurantMS.Core.Services
                 Price = dto.Price,
                 CategoryId = dto.CategoryId,
                 InventoryItemId = dto.InventoryItemId,
-                IsAvailable = dto.IsAvailable
+                IsAvailable = dto.IsAvailable,
+                ImageUrl = dto.ImageUrl
             };
             await _menuRepository.AddAsync(item);
             return true;
@@ -57,6 +58,7 @@ namespace RestaurantMS.Core.Services
             item.CategoryId = dto.CategoryId;
             item.InventoryItemId = dto.InventoryItemId;
             item.IsAvailable = dto.IsAvailable;
+            item.ImageUrl = dto.ImageUrl;
             item.UpdatedAt = DateTime.UtcNow;
 
             await _menuRepository.UpdateAsync(item);
@@ -93,6 +95,7 @@ namespace RestaurantMS.Core.Services
             InventoryItemId = item.InventoryItemId,
             InventoryItemName = item.InventoryItem?.Name,
             IsAvailable = item.IsAvailable,
+            ImageUrl = item.ImageUrl,
             CreatedAt = item.CreatedAt
         };
     }

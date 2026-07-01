@@ -1,0 +1,9 @@
+# .NET build artifacts
+**/bin/
+**/obj/
+
+# Backup files
+*.bak
+
+# Node
+node_modules/

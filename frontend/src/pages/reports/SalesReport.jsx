@@ -75,9 +75,15 @@ const SalesReport = () => {
     try {
       const { from, to } = getDateRange();
       const [dailyRes, itemsRes, payRes] = await Promise.all([
-        axiosInstance.get(`/api/reports/daily?from=${from}&to=${to}`),
-        axiosInstance.get(`/api/reports/items?from=${from}&to=${to}`),
-        axiosInstance.get(`/api/reports/payments?from=${from}&to=${to}`),
+        axiosInstance
+          .get(`/api/reports/daily?from=${from}&to=${to}`)
+          .catch(() => ({ data: { data: [] } })),
+        axiosInstance
+          .get(`/api/reports/items?from=${from}&to=${to}`)
+          .catch(() => ({ data: { data: [] } })),
+        axiosInstance
+          .get(`/api/reports/payments?from=${from}&to=${to}`)
+          .catch(() => ({ data: { data: [] } })),
       ]);
       setDailySales(dailyRes.data.data || []);
       setTopItems(itemsRes.data.data || []);
@@ -186,46 +192,56 @@ const SalesReport = () => {
       )}
 
       {/* Stat Cards */}
-      <div className="stat-grid" style={{ marginBottom: 24 }}>
-        <div className="stat-card">
+      <div className="table-stats" style={{ maxWidth: 560 }}>
+        <div className="table-stat">
           <div
-            className="stat-icon"
+            className="table-stat-icon"
             style={{ background: "#fef2f2", color: "#dc2626" }}
           >
-            💰
+            <i className="ti ti-currency-peso" aria-hidden="true" />
           </div>
-          <div className="stat-info">
-            <span className="stat-value">
+          <div className="table-stat-info">
+            <div
+              className="table-stat-num"
+              style={{ color: "#dc2626", fontSize: 18 }}
+            >
               ₱
               {totalRevenue.toLocaleString("en-PH", {
                 minimumFractionDigits: 2,
               })}
-            </span>
-            <span className="stat-label">Total Revenue</span>
+            </div>
+            <div className="table-stat-label">Total Revenue</div>
           </div>
         </div>
-        <div className="stat-card">
+        <div className="table-stat">
           <div
-            className="stat-icon"
+            className="table-stat-icon"
             style={{ background: "#eff6ff", color: "#2563eb" }}
           >
-            🛒
+            <i className="ti ti-shopping-cart" aria-hidden="true" />
           </div>
-          <div className="stat-info">
-            <span className="stat-value">{totalOrders}</span>
-            <span className="stat-label">Total Orders</span>
+          <div className="table-stat-info">
+            <div className="table-stat-num" style={{ color: "#2563eb" }}>
+              {totalOrders}
+            </div>
+            <div className="table-stat-label">Total Orders</div>
           </div>
         </div>
-        <div className="stat-card">
+        <div className="table-stat">
           <div
-            className="stat-icon"
-            style={{ background: "#f0fdf4", color: "#16a34a" }}
+            className="table-stat-icon"
+            style={{ background: "#f0fdf4", color: "#15803d" }}
           >
-            📊
+            <i className="ti ti-chart-bar" aria-hidden="true" />
           </div>
-          <div className="stat-info">
-            <span className="stat-value">₱{avgOrderValue.toFixed(2)}</span>
-            <span className="stat-label">Avg Order Value</span>
+          <div className="table-stat-info">
+            <div
+              className="table-stat-num"
+              style={{ color: "#15803d", fontSize: 18 }}
+            >
+              ₱{avgOrderValue.toFixed(2)}
+            </div>
+            <div className="table-stat-label">Avg Order Value</div>
           </div>
         </div>
       </div>

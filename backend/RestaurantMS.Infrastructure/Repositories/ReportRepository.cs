@@ -38,8 +38,10 @@ namespace RestaurantMS.Infrastructure.Repositories
             var items = await _context.OrderItems
                 .Include(oi => oi.MenuItem)
                 .Include(oi => oi.Order)
-                .Where(oi => oi.Order.Status == "Served" &&
-                             oi.CreatedAt >= from && oi.CreatedAt <= to)
+                    .ThenInclude(o => o.Bill)
+                .Where(oi => oi.Order.Bill != null &&
+                             oi.Order.Bill.Status == "Paid" &&
+                             oi.CreatedAt.Date >= from.Date && oi.CreatedAt.Date <= to.Date)
                 .ToListAsync();
 
             return items

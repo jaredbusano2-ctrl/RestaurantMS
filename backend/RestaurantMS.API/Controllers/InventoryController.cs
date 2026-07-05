@@ -48,6 +48,21 @@ namespace RestaurantMS.API.Controllers
             }
         }
 
+        [HttpPost]
+        [Authorize(Roles = "Admin,SuperAdmin")]
+        public async Task<IActionResult> Create([FromBody] CreateInventoryDto dto)
+        {
+            try
+            {
+                var item = await _inventoryService.CreateItemAsync(dto);
+                return Ok(ApiResponse<InventoryResponseDto>.Ok(item, "Inventory item created."));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ApiResponse<string>.Fail(ex.Message));
+            }
+        }
+
         [HttpPut("{id}")]
         [Authorize(Roles = "Admin,SuperAdmin")]
         public async Task<IActionResult> UpdateStock(int id, [FromBody] UpdateInventoryDto dto)
@@ -59,6 +74,23 @@ namespace RestaurantMS.API.Controllers
                 if (!result)
                     return NotFound(ApiResponse<string>.Fail("Inventory item not found."));
                 return Ok(ApiResponse<string>.Ok("Stock updated."));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ApiResponse<string>.Fail(ex.Message));
+            }
+        }
+
+        [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin,SuperAdmin")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            try
+            {
+                var result = await _inventoryService.DeleteItemAsync(id);
+                if (!result)
+                    return NotFound(ApiResponse<string>.Fail("Inventory item not found."));
+                return Ok(ApiResponse<string>.Ok("Inventory item deleted."));
             }
             catch (Exception ex)
             {

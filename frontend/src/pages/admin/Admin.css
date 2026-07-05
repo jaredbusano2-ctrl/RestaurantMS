@@ -118,3 +118,52 @@
   grid-template-columns: 1fr 1fr;
   gap: 16px;
 }
+
+/* ── Stat Cards (Table Style) ── */
+.user-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+  max-width: 560px;
+}
+.user-stat {
+  background: #fff;
+  border: 1px solid #e8e5df;
+  border-radius: 14px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+.user-stat-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+  background: #f3f4f6;
+}
+.user-stat.active .user-stat-icon  { background: #dcfce7; }
+.user-stat.inactive .user-stat-icon { background: #fee2e2; }
+.user-stat-info { display: flex; flex-direction: column; gap: 2px; }
+.user-stat-value {
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -1px;
+  color: #1a1714;
+}
+.user-stat.active .user-stat-value  { color: #15803d; }
+.user-stat.inactive .user-stat-value { color: #dc2626; }
+.user-stat-label {
+  font-size: 11px;
+  color: #a39e99;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}

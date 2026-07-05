@@ -31,10 +31,26 @@ namespace RestaurantMS.Infrastructure.Repositories
                 .ToListAsync();
         }
 
+        public async Task<InventoryItem> CreateAsync(InventoryItem item)
+        {
+            await _context.InventoryItems.AddAsync(item);
+            await _context.SaveChangesAsync();
+            return item;
+        }
+
         public async Task UpdateAsync(InventoryItem item)
         {
             _context.InventoryItems.Update(item);
             await _context.SaveChangesAsync();
+        }
+
+        public async Task<bool> DeleteAsync(int id)
+        {
+            var item = await _context.InventoryItems.FindAsync(id);
+            if (item == null) return false;
+            _context.InventoryItems.Remove(item);
+            await _context.SaveChangesAsync();
+            return true;
         }
 
         public async Task AddLogAsync(InventoryLog log)

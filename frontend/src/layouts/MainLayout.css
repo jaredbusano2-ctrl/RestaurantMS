@@ -301,7 +301,45 @@
   color: var(--color-text-tertiary);
   font-size: var(--font-size-base);
 }
+.sidebar-footer {
+  padding: var(--spacing-4);
+  border-top: 1px solid var(--color-border-light);
+  background: var(--color-neutral-50);
+}
 
+/* Sign Out Button */
+.sidebar-logout {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  padding: var(--spacing-3) var(--spacing-4);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-md);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  text-align: left; /* Ensure text is left-aligned */
+}
+
+.sidebar-logout:hover {
+  background: #fef2f2;
+  color: var(--color-error);
+}
+
+.sidebar-logout:active {
+  transform: scale(0.98);
+}
+
+.logout-icon {
+  flex-shrink: 0; /* Prevent icon from shrinking */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 /* Topbar Right */
 .topbar-right {
   display: flex;

@@ -7,7 +7,9 @@ namespace RestaurantMS.Core.Interfaces
         Task<List<InventoryItem>> GetAllAsync();
         Task<InventoryItem?> GetByIdAsync(int id);
         Task<List<InventoryItem>> GetLowStockAsync();
+        Task<InventoryItem> CreateAsync(InventoryItem item);
         Task UpdateAsync(InventoryItem item);
+        Task<bool> DeleteAsync(int id);
         Task AddLogAsync(InventoryLog log);
     }
 }

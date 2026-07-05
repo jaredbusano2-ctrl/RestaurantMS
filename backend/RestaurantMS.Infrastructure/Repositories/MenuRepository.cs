@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using RestaurantMS.Core.Entities;
 using RestaurantMS.Core.Interfaces;
 using RestaurantMS.Infrastructure.Data;
@@ -17,6 +17,7 @@ namespace RestaurantMS.Infrastructure.Repositories
         public async Task<List<MenuItem>> GetAllAsync()
         {
             return await _context.MenuItems
+                .Where(m => !m.IsDeleted)
                 .Include(m => m.Category)
                 .Include(m => m.InventoryItem)
                 .ToListAsync();
@@ -25,6 +26,7 @@ namespace RestaurantMS.Infrastructure.Repositories
         public async Task<MenuItem?> GetByIdAsync(int id)
         {
             return await _context.MenuItems
+                .Where(m => !m.IsDeleted)
                 .Include(m => m.Category)
                 .Include(m => m.InventoryItem)
                 .FirstOrDefaultAsync(m => m.Id == id);
@@ -33,9 +35,9 @@ namespace RestaurantMS.Infrastructure.Repositories
         public async Task<List<MenuItem>> GetByCategoryAsync(int categoryId)
         {
             return await _context.MenuItems
+                .Where(m => !m.IsDeleted && m.CategoryId == categoryId)
                 .Include(m => m.Category)
                 .Include(m => m.InventoryItem)
-                .Where(m => m.CategoryId == categoryId)
                 .ToListAsync();
         }
 
@@ -56,7 +58,9 @@ namespace RestaurantMS.Infrastructure.Repositories
             var item = await _context.MenuItems.FindAsync(id);
             if (item != null)
             {
-                _context.MenuItems.Remove(item);
+                item.IsDeleted = true;
+                item.IsAvailable = false;
+                item.UpdatedAt = DateTime.UtcNow;
                 await _context.SaveChangesAsync();
             }
         }

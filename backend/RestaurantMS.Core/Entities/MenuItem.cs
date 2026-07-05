@@ -26,6 +26,11 @@ namespace RestaurantMS.Core.Entities
 
         public bool IsAvailable { get; set; } = true;
 
+        public bool IsDeleted { get; set; } = false;
+
+        [MaxLength(255)]
+        public string? ImageUrl { get; set; }
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 

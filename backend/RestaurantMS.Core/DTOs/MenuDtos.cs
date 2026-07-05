@@ -8,8 +8,8 @@ namespace RestaurantMS.Core.DTOs
         public int CategoryId { get; set; }
         public int? InventoryItemId { get; set; }
         public bool IsAvailable { get; set; } = true;
+        public string? ImageUrl { get; set; }
     }
-
     public class UpdateMenuItemDto
     {
         public string Name { get; set; } = string.Empty;
@@ -18,8 +18,8 @@ namespace RestaurantMS.Core.DTOs
         public int CategoryId { get; set; }
         public int? InventoryItemId { get; set; }
         public bool IsAvailable { get; set; }
+        public string? ImageUrl { get; set; }
     }
-
     public class MenuItemResponseDto
     {
         public int Id { get; set; }
@@ -31,9 +31,9 @@ namespace RestaurantMS.Core.DTOs
         public int? InventoryItemId { get; set; }
         public string? InventoryItemName { get; set; }
         public bool IsAvailable { get; set; }
+        public string? ImageUrl { get; set; }
         public DateTime CreatedAt { get; set; }
     }
-
     public class MenuCategoryResponseDto
     {
         public int Id { get; set; }

@@ -1,0 +1,71 @@
+/**
+ * Confirmation Dialog Styles
+ */
+
+.confirm-dialog-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.confirm-icon-container {
+  margin-bottom: var(--spacing-4);
+  display: flex;
+  justify-content: center;
+}
+
+.confirm-icon {
+  font-size: 3rem;
+  width: 60px;
+  height: 60px;
+}
+
+.confirm-icon-confirm {
+  color: var(--color-info);
+}
+
+.confirm-icon-delete {
+  color: var(--color-error);
+}
+
+.confirm-icon-logout {
+  color: var(--color-warning);
+}
+
+.confirm-icon-save {
+  color: var(--color-success);
+}
+
+.confirm-message {
+  font-size: var(--font-size-base);
+  color: var(--color-text-secondary);
+  margin-bottom: 0;
+  line-height: var(--line-height-relaxed);
+}
+
+.confirm-actions {
+  display: flex;
+  gap: var(--spacing-3);
+  width: 100%;
+  margin-top: var(--spacing-4);
+}
+
+.confirm-actions .btn {
+  flex: 1;
+  min-height: 44px;
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  padding: var(--spacing-3) var(--spacing-6);
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .confirm-actions {
+    flex-direction: column-reverse;
+  }
+
+  .confirm-actions .btn {
+    width: 100%;
+  }
+}

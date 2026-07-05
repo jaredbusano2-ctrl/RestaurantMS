@@ -22,8 +22,8 @@ namespace RestaurantMS.API.Controllers
         {
             try
             {
-                var fromDate = from ?? DateTime.UtcNow.Date;
-                var toDate = to ?? DateTime.UtcNow.Date.AddDays(1);
+                var fromDate = from ?? DateTime.Now.Date;
+                var toDate = to ?? DateTime.Now.Date.AddDays(1).AddSeconds(-1);
                 var result = await _reportService.GetDailySalesAsync(fromDate, toDate);
                 return Ok(ApiResponse<List<DailySalesDto>>.Ok(result));
             }

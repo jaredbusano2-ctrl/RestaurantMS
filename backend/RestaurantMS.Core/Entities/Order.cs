@@ -17,6 +17,8 @@ namespace RestaurantMS.Core.Entities
 
         public string? SpecialInstructions { get; set; }
 
+        public bool InventoryDeducted { get; set; } = false;
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 

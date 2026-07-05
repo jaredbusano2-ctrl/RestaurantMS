@@ -1,48 +1,50 @@
-import { useState, useEffect } from 'react';
-import MainLayout from '../../layouts/MainLayout';
-import axiosInstance from '../../utils/axiosInstance';
-import './Admin.css';
+import { useState, useEffect } from "react";
+import MainLayout from "../../layouts/MainLayout";
+import axiosInstance from "../../utils/axiosInstance";
+import "./Admin.css";
 
 const ROLES = [
-  { id: 1, name: 'SuperAdmin' },
-  { id: 2, name: 'Admin' },
-  { id: 3, name: 'Manager' },
-  { id: 4, name: 'Waiter' },
-  { id: 5, name: 'Cashier' },
-  { id: 6, name: 'KitchenStaff' },
+  { id: 1, name: "SuperAdmin" },
+  { id: 2, name: "Admin" },
+  { id: 3, name: "Manager" },
+  { id: 4, name: "Waiter" },
+  { id: 5, name: "Cashier" },
+  { id: 6, name: "KitchenStaff" },
 ];
 
 const roleColors = {
-  SuperAdmin: { bg: '#f3f4f6', color: '#111827' },
-  Admin: { bg: '#fee2e2', color: '#991b1b' },
-  Manager: { bg: '#ede9fe', color: '#5b21b6' },
-  Waiter: { bg: '#ffedd5', color: '#9a3412' },
-  Cashier: { bg: '#dbeafe', color: '#1e40af' },
-  KitchenStaff: { bg: '#d1fae5', color: '#065f46' },
+  SuperAdmin: { bg: "#f3f4f6", color: "#111827" },
+  Admin: { bg: "#fee2e2", color: "#991b1b" },
+  Manager: { bg: "#ede9fe", color: "#5b21b6" },
+  Waiter: { bg: "#ffedd5", color: "#9a3412" },
+  Cashier: { bg: "#dbeafe", color: "#1e40af" },
+  KitchenStaff: { bg: "#d1fae5", color: "#065f46" },
 };
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
-  const [filterRole, setFilterRole] = useState('All');
-  const [search, setSearch] = useState('');
+  const [filterRole, setFilterRole] = useState("All");
+  const [search, setSearch] = useState("");
   const [confirmToggle, setConfirmToggle] = useState(null);
   const [form, setForm] = useState({
-    fullName: '',
-    email: '',
-    password: '',
-    roleId: '',
-    branch: 'Main Branch'
+    fullName: "",
+    email: "",
+    password: "",
+    roleId: "",
+    branch: "Main Branch",
   });
-  const [formError, setFormError] = useState('');
+  const [formError, setFormError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => { fetchUsers(); }, []);
+  useEffect(() => {
+    fetchUsers();
+  }, []);
 
   const fetchUsers = async () => {
     try {
-      const res = await axiosInstance.get('/api/users');
+      const res = await axiosInstance.get("/api/users");
       setUsers(res.data.data || []);
     } catch (err) {
       console.error(err);
@@ -53,15 +55,21 @@ const UserManagement = () => {
 
   const handleCreate = async (e) => {
     e.preventDefault();
-    setFormError('');
+    setFormError("");
     setSubmitting(true);
     try {
-      await axiosInstance.post('/api/users', form);
+      await axiosInstance.post("/api/users", form);
       setShowModal(false);
-      setForm({ fullName: '', email: '', password: '', roleId: '', branch: 'Main Branch' });
+      setForm({
+        fullName: "",
+        email: "",
+        password: "",
+        roleId: "",
+        branch: "Main Branch",
+      });
       fetchUsers();
     } catch (err) {
-      setFormError(err.response?.data?.message || 'Failed to create user.');
+      setFormError(err.response?.data?.message || "Failed to create user.");
     } finally {
       setSubmitting(false);
     }
@@ -78,19 +86,24 @@ const UserManagement = () => {
   };
 
   const getInitials = (name) =>
-    name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'U';
+    name
+      ?.split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase() || "U";
 
   const filtered = users
-    .filter(u => filterRole === 'All' || u.role === filterRole)
-    .filter(u =>
-      u.fullName?.toLowerCase().includes(search.toLowerCase()) ||
-      u.email?.toLowerCase().includes(search.toLowerCase())
+    .filter((u) => filterRole === "All" || u.role === filterRole)
+    .filter(
+      (u) =>
+        u.fullName?.toLowerCase().includes(search.toLowerCase()) ||
+        u.email?.toLowerCase().includes(search.toLowerCase()),
     );
 
   const counts = {
     total: users.length,
-    active: users.filter(u => u.isActive).length,
-    inactive: users.filter(u => !u.isActive).length,
+    active: users.filter((u) => u.isActive).length,
+    inactive: users.filter((u) => !u.isActive).length,
   };
 
   return (
@@ -100,41 +113,73 @@ const UserManagement = () => {
           <h1 className="page-title">User Management</h1>
           <p className="page-subtitle">Manage system users, roles and access</p>
         </div>
-        <button className="btn-primary" onClick={() => setShowModal(true)}>+ Add User</button>
+        <button className="btn-primary" onClick={() => setShowModal(true)}>
+          + Add User
+        </button>
       </div>
 
-{/* Summary Cards */}
-<div className="user-stats">
-  <div className="user-stat">
-    <span className="user-stat-value">{counts.total}</span>
-    <span className="user-stat-label">Total Users</span>
-  </div>
-  <div className="user-stat active">
-    <span className="user-stat-value">{counts.active}</span>
-    <span className="user-stat-label">Active</span>
-  </div>
-  <div className="user-stat inactive">
-    <span className="user-stat-value">{counts.inactive}</span>
-    <span className="user-stat-label">Inactive</span>
-  </div>
-</div>
+      {/* Summary Cards */}
+      <div className="table-stats" style={{ maxWidth: 560 }}>
+        <div className="table-stat">
+          <div
+            className="table-stat-icon"
+            style={{ background: "#f3f4f6", color: "#374151" }}
+          >
+            <i className="ti ti-users" aria-hidden="true" />
+          </div>
+          <div className="table-stat-info">
+            <div className="table-stat-num" style={{ color: "#1a1714" }}>
+              {counts.total}
+            </div>
+            <div className="table-stat-label">Total Users</div>
+          </div>
+        </div>
+        <div className="table-stat">
+          <div
+            className="table-stat-icon"
+            style={{ background: "#dcfce7", color: "#15803d" }}
+          >
+            <i className="ti ti-user-check" aria-hidden="true" />
+          </div>
+          <div className="table-stat-info">
+            <div className="table-stat-num" style={{ color: "#15803d" }}>
+              {counts.active}
+            </div>
+            <div className="table-stat-label">Active</div>
+          </div>
+        </div>
+        <div className="table-stat">
+          <div
+            className="table-stat-icon"
+            style={{ background: "#fee2e2", color: "#dc2626" }}
+          >
+            <i className="ti ti-user-off" aria-hidden="true" />
+          </div>
+          <div className="table-stat-info">
+            <div className="table-stat-num" style={{ color: "#dc2626" }}>
+              {counts.inactive}
+            </div>
+            <div className="table-stat-label">Inactive</div>
+          </div>
+        </div>
+      </div>
 
       {/* Filters */}
       <div className="user-filters">
         <div className="topbar-search" style={{ maxWidth: 300 }}>
-          <span>🔍</span>
+          <i className="ti ti-search" aria-hidden="true" />
           <input
             type="text"
             placeholder="Search by name or email..."
             value={search}
-            onChange={e => setSearch(e.target.value)}
+            onChange={(e) => setSearch(e.target.value)}
           />
         </div>
         <div className="filter-pills">
-          {['All', ...ROLES.map(r => r.name)].map(r => (
+          {["All", ...ROLES.map((r) => r.name)].map((r) => (
             <button
               key={r}
-              className={`filter-pill ${filterRole === r ? 'active' : ''}`}
+              className={`filter-pill ${filterRole === r ? "active" : ""}`}
               onClick={() => setFilterRole(r)}
             >
               {r}
@@ -144,7 +189,9 @@ const UserManagement = () => {
       </div>
 
       {/* Table */}
-      {loading ? <div className="loading">Loading users...</div> : (
+      {loading ? (
+        <div className="loading">Loading users...</div>
+      ) : (
         <div className="orders-table-wrapper">
           <table className="orders-table">
             <thead>
@@ -158,15 +205,15 @@ const UserManagement = () => {
               </tr>
             </thead>
             <tbody>
-              {filtered.map(user => (
+              {filtered.map((user) => (
                 <tr key={user.id}>
                   <td>
                     <div className="user-cell">
                       <div
                         className="user-avatar-sm"
                         style={{
-                          background: roleColors[user.role]?.bg || '#f3f4f6',
-                          color: roleColors[user.role]?.color || '#111827'
+                          background: roleColors[user.role]?.bg || "#f3f4f6",
+                          color: roleColors[user.role]?.color || "#111827",
                         }}
                       >
                         {getInitials(user.fullName)}
@@ -174,35 +221,43 @@ const UserManagement = () => {
                       <strong>{user.fullName}</strong>
                     </div>
                   </td>
-                  <td style={{ color: '#6b7280' }}>{user.email}</td>
+                  <td style={{ color: "#6b7280" }}>{user.email}</td>
                   <td>
-                    <span className="status-badge" style={roleColors[user.role]}>
+                    <span
+                      className="status-badge"
+                      style={roleColors[user.role]}
+                    >
                       {user.role}
                     </span>
                   </td>
                   <td>{user.branch}</td>
                   <td>
-                    <span className="status-badge" style={
-                      user.isActive
-                        ? { background: '#d1fae5', color: '#065f46' }
-                        : { background: '#f3f4f6', color: '#6b7280' }
-                    }>
-                      {user.isActive ? '● Active' : '○ Inactive'}
+                    <span
+                      className="status-badge"
+                      style={
+                        user.isActive
+                          ? { background: "#d1fae5", color: "#065f46" }
+                          : { background: "#f3f4f6", color: "#6b7280" }
+                      }
+                    >
+                      {user.isActive ? "● Active" : "○ Inactive"}
                     </span>
                   </td>
                   <td>
                     <button
-                      className={`btn-toggle ${user.isActive ? 'deactivate' : 'activate'}`}
+                      className={`btn-toggle ${user.isActive ? "deactivate" : "activate"}`}
                       onClick={() => setConfirmToggle(user)}
                     >
-                      {user.isActive ? 'Deactivate' : 'Activate'}
+                      {user.isActive ? "Deactivate" : "Activate"}
                     </button>
                   </td>
                 </tr>
               ))}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan="6" className="empty-state">No users found.</td>
+                  <td colSpan="6" className="empty-state">
+                    No users found.
+                  </td>
                 </tr>
               )}
             </tbody>
@@ -213,7 +268,7 @@ const UserManagement = () => {
       {/* Add User Modal */}
       {showModal && (
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
-          <div className="modal-box" onClick={e => e.stopPropagation()}>
+          <div className="modal-box" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>Add New User</h3>
               <button onClick={() => setShowModal(false)}>✕</button>
@@ -226,7 +281,9 @@ const UserManagement = () => {
                   className="form-input"
                   placeholder="e.g. Juan Dela Cruz"
                   value={form.fullName}
-                  onChange={e => setForm({ ...form, fullName: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, fullName: e.target.value })
+                  }
                   required
                 />
               </div>
@@ -237,7 +294,7 @@ const UserManagement = () => {
                   type="email"
                   placeholder="e.g. juan@flavorrush.com"
                   value={form.email}
-                  onChange={e => setForm({ ...form, email: e.target.value })}
+                  onChange={(e) => setForm({ ...form, email: e.target.value })}
                   required
                 />
               </div>
@@ -248,7 +305,9 @@ const UserManagement = () => {
                   type="password"
                   placeholder="Minimum 6 characters"
                   value={form.password}
-                  onChange={e => setForm({ ...form, password: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, password: e.target.value })
+                  }
                   required
                 />
               </div>
@@ -258,12 +317,16 @@ const UserManagement = () => {
                   <select
                     className="form-input"
                     value={form.roleId}
-                    onChange={e => setForm({ ...form, roleId: e.target.value })}
+                    onChange={(e) =>
+                      setForm({ ...form, roleId: e.target.value })
+                    }
                     required
                   >
                     <option value="">Select role</option>
-                    {ROLES.map(r => (
-                      <option key={r.id} value={r.id}>{r.name}</option>
+                    {ROLES.map((r) => (
+                      <option key={r.id} value={r.id}>
+                        {r.name}
+                      </option>
                     ))}
                   </select>
                 </div>
@@ -272,16 +335,26 @@ const UserManagement = () => {
                   <input
                     className="form-input"
                     value={form.branch}
-                    onChange={e => setForm({ ...form, branch: e.target.value })}
+                    onChange={(e) =>
+                      setForm({ ...form, branch: e.target.value })
+                    }
                   />
                 </div>
               </div>
               <div className="modal-footer">
-                <button type="button" className="btn-secondary" onClick={() => setShowModal(false)}>
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={() => setShowModal(false)}
+                >
                   Cancel
                 </button>
-                <button type="submit" className="btn-primary" disabled={submitting}>
-                  {submitting ? 'Creating...' : 'Create User'}
+                <button
+                  type="submit"
+                  className="btn-primary"
+                  disabled={submitting}
+                >
+                  {submitting ? "Creating..." : "Create User"}
                 </button>
               </div>
             </form>
@@ -292,24 +365,46 @@ const UserManagement = () => {
       {/* Confirm Toggle Modal */}
       {confirmToggle && (
         <div className="modal-overlay" onClick={() => setConfirmToggle(null)}>
-          <div className="modal-box confirm-modal" onClick={e => e.stopPropagation()}>
-            <div className="modal-header" style={{ background: confirmToggle.isActive ? '#dc2626' : '#16a34a' }}>
-              <h3>{confirmToggle.isActive ? 'Deactivate User' : 'Activate User'}</h3>
+          <div
+            className="modal-box confirm-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div
+              className="modal-header"
+              style={{
+                background: confirmToggle.isActive ? "#dc2626" : "#16a34a",
+              }}
+            >
+              <h3>
+                {confirmToggle.isActive ? "Deactivate User" : "Activate User"}
+              </h3>
               <button onClick={() => setConfirmToggle(null)}>✕</button>
             </div>
             <div className="modal-body">
-              <p style={{ color: '#374151', marginBottom: 20 }}>
-                Are you sure you want to <strong>{confirmToggle.isActive ? 'deactivate' : 'activate'}</strong> <strong>{confirmToggle.fullName}</strong>?
-                {confirmToggle.isActive && ' They will no longer be able to log in.'}
+              <p style={{ color: "#374151", marginBottom: 20 }}>
+                Are you sure you want to{" "}
+                <strong>
+                  {confirmToggle.isActive ? "deactivate" : "activate"}
+                </strong>{" "}
+                <strong>{confirmToggle.fullName}</strong>?
+                {confirmToggle.isActive &&
+                  " They will no longer be able to log in."}
               </p>
               <div className="modal-footer">
-                <button className="btn-secondary" onClick={() => setConfirmToggle(null)}>Cancel</button>
+                <button
+                  className="btn-secondary"
+                  onClick={() => setConfirmToggle(null)}
+                >
+                  Cancel
+                </button>
                 <button
                   className="btn-primary"
-                  style={{ background: confirmToggle.isActive ? '#dc2626' : '#16a34a' }}
+                  style={{
+                    background: confirmToggle.isActive ? "#dc2626" : "#16a34a",
+                  }}
                   onClick={() => handleToggle(confirmToggle)}
                 >
-                  {confirmToggle.isActive ? 'Yes, Deactivate' : 'Yes, Activate'}
+                  {confirmToggle.isActive ? "Yes, Deactivate" : "Yes, Activate"}
                 </button>
               </div>
             </div>

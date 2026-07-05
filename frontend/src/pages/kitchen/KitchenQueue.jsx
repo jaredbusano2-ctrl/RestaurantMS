@@ -6,7 +6,7 @@ import "./Kitchen.css";
 
 const KitchenQueue = () => {
   const [orders, setOrders] = useState([]);
-  const [lowStock, setLowStock] = useState([]);
+  const [setLowStock] = useState([]);
   const [loading, setLoading] = useState(true);
   const [timers, setTimers] = useState({});
   const [updating, setUpdating] = useState(null);
@@ -164,40 +164,54 @@ const KitchenQueue = () => {
           <span className={`live-badge ${isConnected ? "" : "disconnected"}`}>
             {isConnected ? "● Live" : "○ Offline"}
           </span>
-          {lowStock.length > 0 && (
-            <span className="low-stock-alert">
-              ⚠ {lowStock.length} Low Stock
-            </span>
-          )}
           <button className="btn-secondary" onClick={fetchData}>
             ↻ Refresh
           </button>
         </div>
       </div>
 
-      {lowStock.length > 0 && (
-        <div className="low-stock-banner">
-          <strong>⚠ Low Stock:</strong>
-          {lowStock.map((item) => (
-            <span key={item.id} className="low-stock-item">
-              {item.name} — {item.currentStock} {item.unit} left
-            </span>
-          ))}
+      <div className="table-stats" style={{ maxWidth: 560 }}>
+        <div className="table-stat">
+          <div
+            className="table-stat-icon"
+            style={{ background: "#fef3c7", color: "#b45309" }}
+          >
+            <i className="ti ti-clock" aria-hidden="true" />
+          </div>
+          <div className="table-stat-info">
+            <div className="table-stat-num" style={{ color: "#b45309" }}>
+              {pending.length}
+            </div>
+            <div className="table-stat-label">Pending</div>
+          </div>
         </div>
-      )}
-
-      <div className="kitchen-summary">
-        <div className="kitchen-sum-card pending-sum">
-          <span className="kitchen-sum-num">{pending.length}</span>
-          <span>Pending</span>
+        <div className="table-stat">
+          <div
+            className="table-stat-icon"
+            style={{ background: "#ffedd5", color: "#c2410c" }}
+          >
+            <i className="ti ti-flame" aria-hidden="true" />
+          </div>
+          <div className="table-stat-info">
+            <div className="table-stat-num" style={{ color: "#c2410c" }}>
+              {cooking.length}
+            </div>
+            <div className="table-stat-label">Preparing</div>
+          </div>
         </div>
-        <div className="kitchen-sum-card cooking-sum">
-          <span className="kitchen-sum-num">{cooking.length}</span>
-          <span>Preparing</span>
-        </div>
-        <div className="kitchen-sum-card ready-sum">
-          <span className="kitchen-sum-num">{ready.length}</span>
-          <span>Ready</span>
+        <div className="table-stat">
+          <div
+            className="table-stat-icon"
+            style={{ background: "#dcfce7", color: "#15803d" }}
+          >
+            <i className="ti ti-circle-check" aria-hidden="true" />
+          </div>
+          <div className="table-stat-info">
+            <div className="table-stat-num" style={{ color: "#15803d" }}>
+              {ready.length}
+            </div>
+            <div className="table-stat-label">Ready</div>
+          </div>
         </div>
       </div>
 
@@ -207,11 +221,16 @@ const KitchenQueue = () => {
         <div className="kitchen-columns">
           <div className="kitchen-column">
             <div className="kitchen-column-header pending">
-              <span>⏳ Pending</span>
+              <span>
+                <i className="ti ti-clock-hour-4" aria-hidden="true" /> Pending
+              </span>
               <span className="column-count">{pending.length}</span>
             </div>
             {pending.length === 0 ? (
-              <div className="kitchen-empty">No pending orders 🎉</div>
+              <div className="kitchen-empty">
+                <i className="ti ti-confetti" aria-hidden="true" /> No pending
+                orders
+              </div>
             ) : (
               pending.map((order) => (
                 <OrderCard key={order.id} order={order}>
@@ -229,7 +248,9 @@ const KitchenQueue = () => {
 
           <div className="kitchen-column">
             <div className="kitchen-column-header cooking">
-              <span>🍳 Preparing</span>
+              <span>
+                <i className="ti ti-chef-hat" aria-hidden="true" /> Preparing
+              </span>
               <span className="column-count">{cooking.length}</span>
             </div>
             {cooking.length === 0 ? (
@@ -251,7 +272,9 @@ const KitchenQueue = () => {
 
           <div className="kitchen-column">
             <div className="kitchen-column-header ready">
-              <span>✅ Ready</span>
+              <span>
+                <i className="ti ti-circle-check" aria-hidden="true" /> Ready
+              </span>
               <span className="column-count">{ready.length}</span>
             </div>
             {ready.length === 0 ? (

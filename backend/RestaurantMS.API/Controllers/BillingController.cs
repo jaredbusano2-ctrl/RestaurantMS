@@ -64,6 +64,7 @@ namespace RestaurantMS.API.Controllers
                 return StatusCode(500, new { error = ex.Message });
             }
         }
+
         [HttpPost("pay")]
         public async Task<IActionResult> ProcessPayment([FromBody] ProcessPaymentDto dto)
         {
@@ -90,8 +91,27 @@ namespace RestaurantMS.API.Controllers
             }
         }
 
-        [HttpGet("bill/{billId}/payment")]
+        // ✅ GET: api/billing/payment/{billId} - Cleaner endpoint
+        [HttpGet("payment/{billId}")]
         public async Task<IActionResult> GetPaymentByBillId(int billId)
+        {
+            try
+            {
+                var payment = await _billingService.GetPaymentByBillIdAsync(billId);
+                if (payment == null)
+                    return NotFound(new { error = "No payment found for this bill" });
+
+                return Ok(payment);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = ex.Message });
+            }
+        }
+
+        // ✅ GET: api/billing/bill/{billId}/payment - Kept for backward compatibility
+        [HttpGet("bill/{billId}/payment")]
+        public async Task<IActionResult> GetPaymentByBillIdAlt(int billId)
         {
             try
             {
@@ -138,14 +158,6 @@ namespace RestaurantMS.API.Controllers
             }
         }
 
-        private int GetUserId()
-        {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userIdClaim))
-                throw new UnauthorizedAccessException("User ID not found");
-
-            return int.Parse(userIdClaim);
-        }
         [HttpDelete("{id:int}")]
         public async Task<IActionResult> DeleteBill(int id)
         {
@@ -177,5 +189,13 @@ namespace RestaurantMS.API.Controllers
             }
         }
 
+        private int GetUserId()
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdClaim))
+                throw new UnauthorizedAccessException("User ID not found");
+
+            return int.Parse(userIdClaim);
+        }
     }
 }

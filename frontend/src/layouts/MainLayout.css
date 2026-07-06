@@ -6,7 +6,7 @@
 .layout-wrapper {
   display: flex;
   height: 100vh;
-  overflow: hidden;
+  overflow: visible !important;
   background: var(--color-bg-alt);
 }
 
@@ -40,7 +40,7 @@
   display: flex;
   flex-direction: column;
   flex: 1;
-  overflow: hidden;
+  overflow: visible !important; 
   transition: margin-left var(--transition-base);
 }
 
@@ -214,7 +214,8 @@
   gap: var(--spacing-6);
   box-shadow: var(--shadow-xs);
   position: relative;
-  z-index: 10;
+  z-index: 100;
+  overflow: visible !important;
 }
 
 .topbar-left {
@@ -390,6 +391,7 @@
 /* Notifications Dropdown */
 .topbar-notifications {
   position: relative;
+  z-index: 1001;
 }
 
 .notifications-dropdown {

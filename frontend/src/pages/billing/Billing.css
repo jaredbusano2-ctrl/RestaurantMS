@@ -13,13 +13,15 @@
   height: 100%;
   overflow: hidden;
   background: #f8f7f4;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
 }
 
 .billing-left-content {
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 0 8px 20px 0;
+  padding: 12px 12px 20px 12px;
   scroll-behavior: smooth;
   display: flex;
   flex-direction: column;
@@ -76,14 +78,11 @@
 
 /* ── Sticky Headers ── */
 .sticky-header {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  background: #f8f7f4;
-  padding: 8px 0 10px;
-  border-bottom: 2px solid #e5e7eb;
-  margin: 0 0 8px 0;
   flex-shrink: 0;
+  background: #f8f7f4;
+  padding: 12px 12px 10px 12px;
+  border-bottom: 1px solid #e5e7eb;
+  z-index: 10;
 }
 
 .billing-left-content > .sticky-header:first-child {
@@ -92,7 +91,11 @@
 }
 
 .billing-section-label-paid.sticky-header {
+  flex-shrink: 0;
   background: #f8f7f4;
+  padding: 12px 12px 10px 12px;
+  border-bottom: 1px solid #e5e7eb;
+  z-index: 10;
 }
 
 /* ── View Tabs ── */

@@ -85,13 +85,13 @@ namespace RestaurantMS.Core.Services
 
             // ✅ FIX: Validate status transitions - PREVENT kitchen from marking as "Served"
             var validTransitions = new Dictionary<string, string[]>
-    {
-        { "Pending", new[] { "Cooking", "Cancelled" } },
-        { "Cooking", new[] { "Ready", "Cancelled" } },
-        { "Ready", new[] { "Cancelled" } },  // ✅ Kitchen CANNOT mark as Served
-        { "Served", new[] { } },  // Terminal state - cannot change
-        { "Cancelled", new[] { } }  // Terminal state - cannot change
-    };
+            {
+                { "Pending", new[] { "Cooking", "Cancelled" } },
+                { "Cooking", new[] { "Ready", "Cancelled" } },
+                { "Ready", new[] { "Cancelled" } },
+                { "Served", new string[] { } },
+                { "Cancelled", new string[] { } }
+            };
 
             // ✅ Check if transition is allowed
             if (validTransitions.ContainsKey(order.Status) &&

@@ -40,17 +40,15 @@ namespace RestaurantMS.Infrastructure.Repositories
             Console.WriteLine($"✅ Bill added: {bill.Id}, Rows affected: {result}");
         }
 
-        public async Task UpdateAsync(Order order)
+        public async Task UpdateAsync(Bill bill)
         {
-            _context.Orders.Update(order);
-
-            // ✅ ONLY ONE SaveChangesAsync call
+            _context.Bills.Update(bill);
             var result = await _context.SaveChangesAsync();
-            Console.WriteLine($"✅ Order updated: {order.Id}, Rows affected: {result}");
+            Console.WriteLine($"✅ Bill updated: {bill.Id}, Rows affected: {result}");
 
             if (result == 0)
             {
-                Console.WriteLine($"⚠️ WARNING: No rows were updated for order {order.Id}!");
+                Console.WriteLine($"⚠️ WARNING: No rows were updated for bill {bill.Id}!");
             }
         }
 

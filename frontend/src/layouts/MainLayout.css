@@ -1,9 +1,4 @@
-﻿/**
- * Modern Main Layout Styles
- * Professional, clean, and responsive layout
- */
-
-.layout-wrapper {
+﻿.layout-wrapper {
   display: flex;
   height: 100vh;
   overflow: visible !important;

@@ -10,5 +10,6 @@ namespace RestaurantMS.Core.Interfaces
         Task<List<Order>> GetByTableIdAsync(int tableId);
         Task AddAsync(Order order);
         Task UpdateAsync(Order order);
+
     }
 }

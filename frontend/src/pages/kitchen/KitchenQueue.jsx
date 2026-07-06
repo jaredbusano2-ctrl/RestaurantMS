@@ -3,6 +3,7 @@ import MainLayout from "../../layouts/MainLayout";
 import axiosInstance from "../../utils/axiosInstance";
 import { useSignalR } from "../../hooks/useSignalR";
 import "./Kitchen.css";
+import { useNavigate } from "react-router-dom";
 
 const KitchenQueue = () => {
   const [orders, setOrders] = useState([]);
@@ -12,6 +13,8 @@ const KitchenQueue = () => {
   const [updating, setUpdating] = useState(null);
   const [lastUpdate, setLastUpdate] = useState(null);
   const timerInterval = useRef(null);
+  const [errorModal, setErrorModal] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchData();
@@ -20,11 +23,8 @@ const KitchenQueue = () => {
     };
   }, []);
 
-  // ✅ FIXED: SignalR connection with correct event names
   const { isConnected } = useSignalR("/hubs/kitchen", {
-    // ✅ Changed from "OrderUpdated" to "OrderStatusUpdated" to match backend
     OrderStatusUpdated: (data) => {
-      console.log(`🔄 Order status updated:`, data);
       // Handle both full order object and {OrderId, Status} format
       if (data && data.Id) {
         setLastUpdate(`Order #${data.Id} → ${data.Status}`);
@@ -34,16 +34,12 @@ const KitchenQueue = () => {
       fetchData();
       playNotificationSound();
     },
-    // ✅ Changed from "OrderReady" to "NewOrder" for new orders
     NewOrder: (order) => {
-      console.log(`📦 New order #${order.Id} received!`);
       setLastUpdate(`📦 New Order #${order.Id}`);
       fetchData();
       playNotificationSound();
     },
-    // ✅ Added LowStockAlert handler
     LowStockAlert: (items) => {
-      console.log(`⚠️ Low stock alert:`, items);
       setLowStock(items);
       // Optionally show a notification
       if (items && items.length > 0) {
@@ -52,7 +48,6 @@ const KitchenQueue = () => {
     },
     // ✅ Keep OrderReady for table notifications
     OrderReady: (orderId) => {
-      console.log(`📢 Order #${orderId} is ready for pickup!`);
       setLastUpdate(`📢 Order #${orderId} is ready!`);
       playNotificationSound();
     },
@@ -113,36 +108,32 @@ const KitchenQueue = () => {
   const updateStatus = async (id, status) => {
     setUpdating(id);
     try {
-      console.log(`🟡 Updating order ${id} to status: ${status}`);
-
       const response = await axiosInstance.put(`/api/orders/${id}/status`, {
         status,
       });
       console.log(`✅ Order ${id} updated:`, response.data);
-
-      // Refresh the data
       await fetchData();
-
-      // Show success feedback
       setLastUpdate(`✅ Order #${id} → ${status}`);
     } catch (err) {
       console.error("❌ Error updating status:", err);
-      console.error("❌ Response:", err.response?.data);
-      console.error("❌ Status:", err.response?.status);
-
-      // Show error to user
-      const errorMessage =
+      const message =
         err.response?.data?.message || err.response?.data?.error || err.message;
-      alert(`Failed to update order: ${errorMessage}`);
+      setErrorModal(message);
     } finally {
       setUpdating(null);
     }
   };
-
   const formatTime = (seconds = 0) => {
+
+    const MAX_SECONDS = 1800; // 30 minutes
+    if (seconds > MAX_SECONDS) {
+      seconds = MAX_SECONDS;
+    }
+
     const m = Math.floor(seconds / 60);
     const s = seconds % 60;
-    return `${m}:${String(s).padStart(2, "0")}`;
+
+    return `${m}m ${String(s).padStart(2, "0")}s`;
   };
 
   const pending = orders.filter((o) => o.status === "Pending");
@@ -348,14 +339,14 @@ const KitchenQueue = () => {
                 <OrderCard key={order.id} order={order}>
                   {/* ✅ REMOVE the "Mark as Served" button */}
                   {/* ❌ DELETE THIS: 
-        <button
-          className="btn-success kitchen-btn"
-          disabled={updating === order.id}
-          onClick={() => updateStatus(order.id, "Served")}
-        >
-          {updating === order.id ? "..." : "✓ Mark as Served"}
-        </button>
-        */}
+          <button
+            className="btn-success kitchen-btn"
+            disabled={updating === order.id}
+            onClick={() => updateStatus(order.id, "Served")}
+          >
+            {updating === order.id ? "..." : "✓ Mark as Served"}
+          </button>
+          */}
 
                   {/* ✅ REPLACE with this info label */}
                   <div
@@ -380,6 +371,54 @@ const KitchenQueue = () => {
                 </OrderCard>
               ))
             )}
+          </div>
+        </div>
+      )}
+      {errorModal && (
+        <div className="modal-overlay" onClick={() => setErrorModal(null)}>
+          <div className="modal-box" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Cannot start cooking</h3>
+              <button
+                className="modal-close-btn"
+                onClick={() => setErrorModal(null)}
+              >
+                <i className="ti ti-x" aria-hidden="true" />
+              </button>
+            </div>
+            <div
+              className="modal-body"
+              style={{ alignItems: "center", textAlign: "center" }}
+            >
+              <div className="modal-icon-circle danger">
+                <i className="ti ti-alert-triangle" aria-hidden="true" />
+              </div>
+              <p
+                style={{
+                  fontSize: 14,
+                  color: "#6b7280",
+                  margin: 0,
+                  lineHeight: 1.6,
+                }}
+              >
+                {errorModal}
+              </p>
+            </div>
+            <div className="modal-footer" style={{ padding: "16px 20px" }}>
+              <button
+                className="btn-secondary"
+                onClick={() => setErrorModal(null)}
+              >
+                Close
+              </button>
+              <button
+                className="btn-primary"
+                onClick={() => navigate("/inventory")}
+              >
+                <i className="ti ti-package" aria-hidden="true" /> Go to
+                inventory
+              </button>
+            </div>
           </div>
         </div>
       )}

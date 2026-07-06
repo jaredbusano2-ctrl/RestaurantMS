@@ -43,12 +43,17 @@ namespace RestaurantMS.Core.Services
 
         public async Task<int> CreateOrderAsync(CreateOrderDto dto, int waiterId)
         {
+            var now = DateTime.Now;
+
             var order = new Order
             {
                 TableId = dto.TableId,
                 WaiterId = waiterId,
                 Status = "Pending",
                 SpecialInstructions = dto.SpecialInstructions,
+                CreatedAt = now,
+                UpdatedAt = now,
+                InventoryDeducted = false,
                 OrderItems = new List<OrderItem>()
             };
 
@@ -62,16 +67,22 @@ namespace RestaurantMS.Core.Services
                     MenuItemId = item.MenuItemId,
                     Quantity = item.Quantity,
                     UnitPrice = menuItem.Price,
-                    SpecialNote = item.SpecialNote
+                    SpecialNote = item.SpecialNote,
+                    CreatedAt = now
                 });
             }
 
+            Console.WriteLine($"🟡 Creating order at: {now}");
+
             await _orderRepository.AddAsync(order);
+
+            Console.WriteLine($"✅ Order created: Id={order.Id}, CreatedAt={order.CreatedAt}");
 
             var table = await _tableRepository.GetByIdAsync(dto.TableId);
             if (table != null)
             {
                 table.Status = "Occupied";
+                table.UpdatedAt = now;
                 await _tableRepository.UpdateAsync(table);
             }
 
@@ -80,10 +91,12 @@ namespace RestaurantMS.Core.Services
 
         public async Task<bool> UpdateOrderStatusAsync(int id, string status)
         {
+            if (string.IsNullOrWhiteSpace(status))
+                throw new ArgumentException("Status cannot be empty.");
+
             var order = await _orderRepository.GetByIdAsync(id);
             if (order == null) return false;
 
-            // ✅ FIX: Validate status transitions - PREVENT kitchen from marking as "Served"
             var validTransitions = new Dictionary<string, string[]>
             {
                 { "Pending", new[] { "Cooking", "Cancelled" } },
@@ -93,7 +106,6 @@ namespace RestaurantMS.Core.Services
                 { "Cancelled", new string[] { } }
             };
 
-            // ✅ Check if transition is allowed
             if (validTransitions.ContainsKey(order.Status) &&
                 !validTransitions[order.Status].Contains(status))
             {
@@ -103,10 +115,21 @@ namespace RestaurantMS.Core.Services
                 );
             }
 
+            // ✅ NEW: Block Cooking if any required ingredient is out of stock
+            if (status == "Cooking" && !order.InventoryDeducted)
+            {
+                var shortages = await GetInventoryShortagesAsync(order);
+                if (shortages.Any())
+                {
+                    throw new InvalidOperationException(
+                        $"Cannot start cooking — insufficient stock: {string.Join(", ", shortages)}"
+                    );
+                }
+            }
+
             order.Status = status;
             order.UpdatedAt = DateTime.UtcNow;
 
-            // Deduct inventory when kitchen starts cooking
             if (status == "Cooking" && !order.InventoryDeducted)
             {
                 await DeductInventoryForOrderAsync(order);
@@ -115,7 +138,6 @@ namespace RestaurantMS.Core.Services
 
             await _orderRepository.UpdateAsync(order);
 
-            // ✅ Only free table when status is "Served" (which only happens after payment)
             if (status == "Served")
             {
                 var table = await _tableRepository.GetByIdAsync(order.TableId);
@@ -127,6 +149,27 @@ namespace RestaurantMS.Core.Services
             }
 
             return true;
+        }
+
+        private async Task<List<string>> GetInventoryShortagesAsync(Order order)
+        {
+            var shortages = new List<string>();
+
+            foreach (var orderItem in order.OrderItems)
+            {
+                var menuItem = await _menuRepository.GetByIdAsync(orderItem.MenuItemId);
+                if (menuItem?.InventoryItemId == null) continue;
+
+                var inventoryItem = await _inventoryRepository.GetByIdAsync(menuItem.InventoryItemId.Value);
+                if (inventoryItem == null) continue;
+
+                if (inventoryItem.CurrentStock < orderItem.Quantity)
+                {
+                    shortages.Add($"{inventoryItem.Name} (has {inventoryItem.CurrentStock}, needs {orderItem.Quantity})");
+                }
+            }
+
+            return shortages;
         }
 
         private async Task DeductInventoryForOrderAsync(Order order)

@@ -43,7 +43,6 @@ const Dashboard = () => {
     try {
       const promises = [];
 
-      // Recent orders visible to Super Admin, Admin, Manager, Waiter only
       if (
         [ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.MANAGER, ROLES.WAITER].includes(
           role,
@@ -58,7 +57,6 @@ const Dashboard = () => {
         promises.push(Promise.resolve({ data: { data: [] } }));
       }
 
-      // Table data for relevant roles
       if (
         [ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.MANAGER, ROLES.WAITER].includes(
           role,
@@ -73,7 +71,6 @@ const Dashboard = () => {
         promises.push(Promise.resolve({ data: { data: [] } }));
       }
 
-      // Inventory for relevant roles
       if (
         [
           ROLES.SUPER_ADMIN,
@@ -91,7 +88,6 @@ const Dashboard = () => {
         promises.push(Promise.resolve({ data: { data: [] } }));
       }
 
-      // Reports for managers and above
       if ([ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.MANAGER].includes(role)) {
         const today = new Date();
         const from = new Date();
@@ -103,10 +99,11 @@ const Dashboard = () => {
             )
             .catch(() => ({ data: { data: [] } })),
         );
+        // ✅ FIXED: was /api/reports/top-items, backend route is /api/reports/items
         promises.push(
           axiosInstance
             .get(
-              `/api/reports/top-items?from=${from.toISOString()}&to=${today.toISOString()}`,
+              `/api/reports/items?from=${from.toISOString()}&to=${today.toISOString()}`,
             )
             .catch(() => ({ data: { data: [] } })),
         );
@@ -126,9 +123,11 @@ const Dashboard = () => {
 
       let formattedTopItems = [];
       if (items && items.length > 0) {
-        formattedTopItems = items.map(item => ({
-          itemName: item.name || item.menuItemName || item.itemName || `Item ${item.id}`,
-          totalQuantitySold: item.totalSold || item.quantity || item.totalQuantitySold || 0,
+        formattedTopItems = items.map((item) => ({
+          itemName:
+            item.name || item.menuItemName || item.itemName || `Item ${item.id}`,
+          totalQuantitySold:
+            item.totalSold || item.quantity || item.totalQuantitySold || 0,
           totalRevenue: item.revenue || item.totalRevenue || 0,
         }));
       } else {
@@ -162,10 +161,10 @@ const Dashboard = () => {
 
   const getTopItemsFromOrders = (orders) => {
     const itemMap = {};
-    
-    orders.forEach(order => {
+
+    orders.forEach((order) => {
       if (order.items && order.items.length > 0) {
-        order.items.forEach(item => {
+        order.items.forEach((item) => {
           const name = item.menuItemName || item.name || `Item ${item.menuItemId}`;
           if (!itemMap[name]) {
             itemMap[name] = {
@@ -215,9 +214,31 @@ const Dashboard = () => {
     currentPage * ordersPerPage,
   );
 
+  const PaginationControls = () =>
+    totalPages > 1 && (
+      <div className="table-pagination">
+        <button
+          className="pagination-btn"
+          onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+          disabled={currentPage === 1}
+        >
+          <i className="ti ti-chevron-left" aria-hidden="true" />
+        </button>
+        <span className="pagination-info">
+          Page {currentPage} of {totalPages}
+        </span>
+        <button
+          className="pagination-btn"
+          onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+          disabled={currentPage === totalPages}
+        >
+          <i className="ti ti-chevron-right" aria-hidden="true" />
+        </button>
+      </div>
+    );
+
   return (
     <MainLayout>
-      {/* Header */}
       <div className="page-header">
         <div>
           <h1 className="page-title">
@@ -243,7 +264,6 @@ const Dashboard = () => {
         <div className="loading">Loading dashboard...</div>
       ) : (
         <>
-          {/* MANAGER / ADMIN / SUPER ADMIN VIEW */}
           {isManagerOrAbove && (
             <>
               <div className="stat-grid">
@@ -315,7 +335,6 @@ const Dashboard = () => {
                 </div>
               </div>
 
-              {/* Order Status Summary */}
               <div className="dashboard-row">
                 <div className="dashboard-card flex-2">
                   <h3 className="dashboard-card-title">
@@ -329,13 +348,16 @@ const Dashboard = () => {
                     >
                       <span
                         className="order-status-num"
-                        style={{ color: "#92400e" }}
+                        style={{ color: statusColor.Pending.color }}
                       >
                         {stats.pendingOrders}
                       </span>
                       <span
                         className="status-badge"
-                        style={{ background: "#fef3c7", color: "#92400e" }}
+                        style={{
+                          background: statusColor.Pending.bg,
+                          color: statusColor.Pending.color,
+                        }}
                       >
                         Pending
                       </span>
@@ -347,13 +369,16 @@ const Dashboard = () => {
                     >
                       <span
                         className="order-status-num"
-                        style={{ color: "#1e40af" }}
+                        style={{ color: statusColor.Cooking.color }}
                       >
                         {stats.cookingOrders}
                       </span>
                       <span
                         className="status-badge"
-                        style={{ background: "#dbeafe", color: "#1e40af" }}
+                        style={{
+                          background: statusColor.Cooking.bg,
+                          color: statusColor.Cooking.color,
+                        }}
                       >
                         Cooking
                       </span>
@@ -365,13 +390,16 @@ const Dashboard = () => {
                     >
                       <span
                         className="order-status-num"
-                        style={{ color: "#065f46" }}
+                        style={{ color: statusColor.Ready.color }}
                       >
                         {stats.readyOrders}
                       </span>
                       <span
                         className="status-badge"
-                        style={{ background: "#d1fae5", color: "#065f46" }}
+                        style={{
+                          background: statusColor.Ready.bg,
+                          color: statusColor.Ready.color,
+                        }}
                       >
                         Ready
                       </span>
@@ -383,13 +411,16 @@ const Dashboard = () => {
                     >
                       <span
                         className="order-status-num"
-                        style={{ color: "#374151" }}
+                        style={{ color: statusColor.Served.color }}
                       >
                         {stats.totalOrders}
                       </span>
                       <span
                         className="status-badge"
-                        style={{ background: "#f3f4f6", color: "#374151" }}
+                        style={{
+                          background: statusColor.Served.bg,
+                          color: statusColor.Served.color,
+                        }}
                       >
                         Total
                       </span>
@@ -444,31 +475,7 @@ const Dashboard = () => {
                     </tbody>
                   </table>
 
-                  {totalPages > 1 && (
-                    <div className="table-pagination">
-                      <button
-                        className="pagination-btn"
-                        onClick={() =>
-                          setCurrentPage((p) => Math.max(1, p - 1))
-                        }
-                        disabled={currentPage === 1}
-                      >
-                        <i className="ti ti-chevron-left" aria-hidden="true" />
-                      </button>
-                      <span className="pagination-info">
-                        Page {currentPage} of {totalPages}
-                      </span>
-                      <button
-                        className="pagination-btn"
-                        onClick={() =>
-                          setCurrentPage((p) => Math.min(totalPages, p + 1))
-                        }
-                        disabled={currentPage === totalPages}
-                      >
-                        <i className="ti ti-chevron-right" aria-hidden="true" />
-                      </button>
-                    </div>
-                  )}
+                  <PaginationControls />
                 </div>
 
                 <div className="dashboard-card flex-1">
@@ -486,7 +493,8 @@ const Dashboard = () => {
                         />
                         <Tooltip
                           formatter={(value, name) => {
-                            if (name === 'totalQuantitySold') return [`${value} sold`, 'Quantity'];
+                            if (name === "totalQuantitySold")
+                              return [`${value} sold`, "Quantity"];
                             return [value, name];
                           }}
                         />
@@ -498,9 +506,23 @@ const Dashboard = () => {
                       </BarChart>
                     </ResponsiveContainer>
                   ) : (
-                    <div className="chart-empty" style={{ height: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
-                      <i className="ti ti-chart-bar" style={{ fontSize: 40, color: '#9ca3af' }} />
-                      <p style={{ color: '#9ca3af', marginTop: 10 }}>No sales data yet</p>
+                    <div
+                      className="chart-empty"
+                      style={{
+                        height: 200,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        flexDirection: "column",
+                      }}
+                    >
+                      <i
+                        className="ti ti-chart-bar"
+                        style={{ fontSize: 40, color: "#9ca3af" }}
+                      />
+                      <p style={{ color: "#9ca3af", marginTop: 10 }}>
+                        No sales data yet
+                      </p>
                     </div>
                   )}
 
@@ -554,7 +576,7 @@ const Dashboard = () => {
                     className="stat-icon"
                     style={{ background: "#fef2f2", color: "#dc2626" }}
                   >
-                    📋
+                    <i className="ti ti-clipboard-list" aria-hidden="true" />
                   </div>
                   <div className="stat-info">
                     <span className="stat-value">{stats.totalOrders}</span>
@@ -566,7 +588,7 @@ const Dashboard = () => {
                     className="stat-icon"
                     style={{ background: "#fef3c7", color: "#92400e" }}
                   >
-                    ⏳
+                    <i className="ti ti-clock-hour-4" aria-hidden="true" />
                   </div>
                   <div className="stat-info">
                     <span className="stat-value">{stats.pendingOrders}</span>
@@ -578,7 +600,7 @@ const Dashboard = () => {
                     className="stat-icon"
                     style={{ background: "#d1fae5", color: "#065f46" }}
                   >
-                    ✅
+                    <i className="ti ti-circle-check" aria-hidden="true" />
                   </div>
                   <div className="stat-info">
                     <span className="stat-value">{stats.readyOrders}</span>
@@ -590,7 +612,7 @@ const Dashboard = () => {
                     className="stat-icon"
                     style={{ background: "#eff6ff", color: "#2563eb" }}
                   >
-                    🪑
+                    <i className="ti ti-armchair" aria-hidden="true" />
                   </div>
                   <div className="stat-info">
                     <span className="stat-value">{stats.availableTables}</span>
@@ -645,8 +667,8 @@ const Dashboard = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {recentOrders.length > 0 ? (
-                      recentOrders.map((order) => (
+                    {paginatedOrders.length > 0 ? (
+                      paginatedOrders.map((order) => (
                         <tr key={order.id}>
                           <td>
                             <strong>
@@ -675,6 +697,8 @@ const Dashboard = () => {
                     )}
                   </tbody>
                 </table>
+
+                <PaginationControls />
               </div>
             </>
           )}
@@ -688,7 +712,7 @@ const Dashboard = () => {
                     className="stat-icon"
                     style={{ background: "#fef2f2", color: "#dc2626" }}
                   >
-                    💰
+                    <i className="ti ti-cash" aria-hidden="true" />
                   </div>
                   <div className="stat-info">
                     <span className="stat-value">
@@ -702,7 +726,7 @@ const Dashboard = () => {
                     className="stat-icon"
                     style={{ background: "#eff6ff", color: "#2563eb" }}
                   >
-                    🧾
+                    <i className="ti ti-receipt" aria-hidden="true" />
                   </div>
                   <div className="stat-info">
                     <span className="stat-value">{stats.todayOrders}</span>
@@ -714,7 +738,7 @@ const Dashboard = () => {
                     className="stat-icon"
                     style={{ background: "#d1fae5", color: "#065f46" }}
                   >
-                    ✅
+                    <i className="ti ti-circle-check" aria-hidden="true" />
                   </div>
                   <div className="stat-info">
                     <span className="stat-value">{stats.readyOrders}</span>
@@ -726,7 +750,7 @@ const Dashboard = () => {
                     className="stat-icon"
                     style={{ background: "#fef3c7", color: "#92400e" }}
                   >
-                    ⏳
+                    <i className="ti ti-clock-hour-4" aria-hidden="true" />
                   </div>
                   <div className="stat-info">
                     <span className="stat-value">{stats.pendingOrders}</span>
@@ -769,7 +793,7 @@ const Dashboard = () => {
                     className="stat-icon"
                     style={{ background: "#fef3c7", color: "#92400e" }}
                   >
-                    ⏳
+                    <i className="ti ti-clock-hour-4" aria-hidden="true" />
                   </div>
                   <div className="stat-info">
                     <span className="stat-value">{stats.pendingOrders}</span>
@@ -781,7 +805,7 @@ const Dashboard = () => {
                     className="stat-icon"
                     style={{ background: "#dbeafe", color: "#1e40af" }}
                   >
-                    🍳
+                    <i className="ti ti-chef-hat" aria-hidden="true" />
                   </div>
                   <div className="stat-info">
                     <span className="stat-value">{stats.cookingOrders}</span>
@@ -793,7 +817,7 @@ const Dashboard = () => {
                     className="stat-icon"
                     style={{ background: "#d1fae5", color: "#065f46" }}
                   >
-                    ✅
+                    <i className="ti ti-circle-check" aria-hidden="true" />
                   </div>
                   <div className="stat-info">
                     <span className="stat-value">{stats.readyOrders}</span>
@@ -809,7 +833,7 @@ const Dashboard = () => {
                       color: stats.lowStockItems > 0 ? "#dc2626" : "#16a34a",
                     }}
                   >
-                    📦
+                    <i className="ti ti-package" aria-hidden="true" />
                   </div>
                   <div className="stat-info">
                     <span

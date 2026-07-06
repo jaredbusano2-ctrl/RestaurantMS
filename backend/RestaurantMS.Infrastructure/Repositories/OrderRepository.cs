@@ -14,6 +14,7 @@ namespace RestaurantMS.Infrastructure.Repositories
             _context = context;
         }
 
+
         public async Task<List<Order>> GetAllAsync()
         {
             return await _context.Orders
@@ -67,16 +68,32 @@ namespace RestaurantMS.Infrastructure.Repositories
         public async Task UpdateAsync(Order order)
         {
             _context.Orders.Update(order);
-            
+
             // ✅ FIX: Only call SaveChangesAsync ONCE
             var result = await _context.SaveChangesAsync();
             Console.WriteLine($"✅ Order updated: {order.Id}, Rows affected: {result}");
-            
+
             // Optional: Log warning if no rows were updated
             if (result == 0)
             {
                 Console.WriteLine($"⚠️ WARNING: No rows were updated for order {order.Id}!");
             }
+        }
+
+
+        public async Task<Order?> GetOrderWithItemsAsync(int id)
+        {
+            return await _context.Orders
+                .Include(o => o.OrderItems)
+                .FirstOrDefaultAsync(o => o.Id == id);
+        }
+
+        public async Task<List<Order>> GetOrdersWithItemsAsync(List<int> ids)
+        {
+            return await _context.Orders
+                .Include(o => o.OrderItems)
+                .Where(o => ids.Contains(o.Id))
+                .ToListAsync();
         }
     }
 }

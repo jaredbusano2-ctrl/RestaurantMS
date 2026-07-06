@@ -19,8 +19,9 @@ namespace RestaurantMS.Core.Entities
 
         public bool InventoryDeducted { get; set; } = false;
 
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+        // ✅ Remove any default value - let the service set it
+        public DateTime CreatedAt { get; set; }
+        public DateTime UpdatedAt { get; set; }
 
         [ForeignKey("TableId")]
         public virtual Table Table { get; set; } = null!;

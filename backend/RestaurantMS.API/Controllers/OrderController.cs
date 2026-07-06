@@ -90,6 +90,11 @@ namespace RestaurantMS.API.Controllers
                     return NotFound(ApiResponse<string>.Fail("Order not found."));
                 return Ok(ApiResponse<string>.Ok("Order status updated."));
             }
+            catch (InvalidOperationException ex)
+            {
+                // Business-rule rejection (e.g. insufficient stock, invalid status transition)
+                return BadRequest(ApiResponse<string>.Fail(ex.Message));
+            }
             catch (Exception ex)
             {
                 return StatusCode(500, ApiResponse<string>.Fail(ex.Message));

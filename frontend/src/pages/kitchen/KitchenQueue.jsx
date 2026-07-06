@@ -6,7 +6,7 @@ import "./Kitchen.css";
 
 const KitchenQueue = () => {
   const [orders, setOrders] = useState([]);
-  const [setLowStock] = useState([]);
+  const [lowStock, setLowStock] = useState([]); // ✅ ADD THIS - Fixes the error!
   const [loading, setLoading] = useState(true);
   const [timers, setTimers] = useState({});
   const [updating, setUpdating] = useState(null);
@@ -20,14 +20,37 @@ const KitchenQueue = () => {
     };
   }, []);
 
-  // SignalR connection with proper event handlers
+  // ✅ FIXED: SignalR connection with correct event names
   const { isConnected } = useSignalR("/hubs/kitchen", {
-    OrderUpdated: (orderId, status) => {
-      console.log(`🔄 Order #${orderId} updated to: ${status}`);
-      setLastUpdate(`Order #${orderId} → ${status}`);
+    // ✅ Changed from "OrderUpdated" to "OrderStatusUpdated" to match backend
+    OrderStatusUpdated: (data) => {
+      console.log(`🔄 Order status updated:`, data);
+      // Handle both full order object and {OrderId, Status} format
+      if (data && data.Id) {
+        setLastUpdate(`Order #${data.Id} → ${data.Status}`);
+      } else if (data && data.OrderId) {
+        setLastUpdate(`Order #${data.OrderId} → ${data.Status}`);
+      }
       fetchData();
       playNotificationSound();
     },
+    // ✅ Changed from "OrderReady" to "NewOrder" for new orders
+    NewOrder: (order) => {
+      console.log(`📦 New order #${order.Id} received!`);
+      setLastUpdate(`📦 New Order #${order.Id}`);
+      fetchData();
+      playNotificationSound();
+    },
+    // ✅ Added LowStockAlert handler
+    LowStockAlert: (items) => {
+      console.log(`⚠️ Low stock alert:`, items);
+      setLowStock(items);
+      // Optionally show a notification
+      if (items && items.length > 0) {
+        setLastUpdate(`⚠️ ${items.length} items low in stock!`);
+      }
+    },
+    // ✅ Keep OrderReady for table notifications
     OrderReady: (orderId) => {
       console.log(`📢 Order #${orderId} is ready for pickup!`);
       setLastUpdate(`📢 Order #${orderId} is ready!`);
@@ -63,18 +86,23 @@ const KitchenQueue = () => {
 
   const fetchData = async () => {
     try {
-      const [pendingRes, cookingRes, readyRes, stockRes] = await Promise.all([
-        axiosInstance.get("/api/orders/status/Pending"),
-        axiosInstance.get("/api/orders/status/Cooking"),
-        axiosInstance.get("/api/orders/status/Ready"),
-        axiosInstance.get("/api/inventory/low-stock"),
-      ]);
+      const [pendingRes, cookingRes, readyRes, lowStockRes] = await Promise.all(
+        [
+          axiosInstance.get("/api/orders/status/Pending"),
+          axiosInstance.get("/api/orders/status/Cooking"),
+          axiosInstance.get("/api/orders/status/Ready"),
+          axiosInstance.get("/api/inventory/low-stock"),
+        ],
+      );
       setOrders([
         ...(pendingRes.data.data || []),
         ...(cookingRes.data.data || []),
         ...(readyRes.data.data || []),
       ]);
-      setLowStock(stockRes.data.data || []);
+      // ✅ Store low stock data
+      if (lowStockRes.data && lowStockRes.data.data) {
+        setLowStock(lowStockRes.data.data);
+      }
     } catch (err) {
       console.error("Error fetching data:", err);
     } finally {
@@ -85,12 +113,27 @@ const KitchenQueue = () => {
   const updateStatus = async (id, status) => {
     setUpdating(id);
     try {
-      await axiosInstance.put(`/api/orders/${id}/status`, { status });
-      // Send SignalR notification to kitchen group
-      // The backend will handle broadcasting via SendOrderUpdate
+      console.log(`🟡 Updating order ${id} to status: ${status}`);
+
+      const response = await axiosInstance.put(`/api/orders/${id}/status`, {
+        status,
+      });
+      console.log(`✅ Order ${id} updated:`, response.data);
+
+      // Refresh the data
       await fetchData();
+
+      // Show success feedback
+      setLastUpdate(`✅ Order #${id} → ${status}`);
     } catch (err) {
-      console.error("Error updating status:", err);
+      console.error("❌ Error updating status:", err);
+      console.error("❌ Response:", err.response?.data);
+      console.error("❌ Status:", err.response?.status);
+
+      // Show error to user
+      const errorMessage =
+        err.response?.data?.message || err.response?.data?.error || err.message;
+      alert(`Failed to update order: ${errorMessage}`);
     } finally {
       setUpdating(null);
     }
@@ -169,6 +212,26 @@ const KitchenQueue = () => {
           </button>
         </div>
       </div>
+
+      {/* ✅ Optional: Show low stock warning */}
+      {lowStock.length > 0 && (
+        <div
+          className="low-stock-warning"
+          style={{
+            background: "#fef2f2",
+            border: "1px solid #fecaca",
+            borderRadius: "8px",
+            padding: "12px 16px",
+            marginBottom: "16px",
+            color: "#dc2626",
+          }}
+        >
+          <strong>⚠️ Low Stock Alert:</strong>{" "}
+          {lowStock
+            .map((item) => `${item.name} (${item.currentStock} ${item.unit})`)
+            .join(", ")}
+        </div>
+      )}
 
       <div className="table-stats" style={{ maxWidth: 560 }}>
         <div className="table-stat">
@@ -260,7 +323,7 @@ const KitchenQueue = () => {
                 <OrderCard key={order.id} order={order}>
                   <button
                     className="btn-cooking kitchen-btn"
-                    disabled={updating === order.id}
+                    disabled={updating === order.id} // ✅ Only disabled when updating
                     onClick={() => updateStatus(order.id, "Ready")}
                   >
                     {updating === order.id ? "..." : "Mark Ready"}
@@ -274,6 +337,7 @@ const KitchenQueue = () => {
             <div className="kitchen-column-header ready">
               <span>
                 <i className="ti ti-circle-check" aria-hidden="true" /> Ready
+                for Billing
               </span>
               <span className="column-count">{ready.length}</span>
             </div>
@@ -282,14 +346,37 @@ const KitchenQueue = () => {
             ) : (
               ready.map((order) => (
                 <OrderCard key={order.id} order={order}>
-                  {/* CHANGE THIS: Replace the static label with a button */}
-                  <button
-                    className="btn-success kitchen-btn"
-                    disabled={updating === order.id}
-                    onClick={() => updateStatus(order.id, "Served")}
+                  {/* ✅ REMOVE the "Mark as Served" button */}
+                  {/* ❌ DELETE THIS: 
+        <button
+          className="btn-success kitchen-btn"
+          disabled={updating === order.id}
+          onClick={() => updateStatus(order.id, "Served")}
+        >
+          {updating === order.id ? "..." : "✓ Mark as Served"}
+        </button>
+        */}
+
+                  {/* ✅ REPLACE with this info label */}
+                  <div
+                    style={{
+                      background: "#dcfce7",
+                      color: "#15803d",
+                      padding: "8px 12px",
+                      borderRadius: "6px",
+                      fontSize: "13px",
+                      fontWeight: 600,
+                      width: "100%",
+                      textAlign: "center",
+                      border: "1px solid #86efac",
+                    }}
                   >
-                    {updating === order.id ? "..." : "✓ Mark as Served"}
-                  </button>
+                    <i
+                      className="ti ti-circle-check"
+                      style={{ marginRight: "6px" }}
+                    />
+                    Ready for Billing
+                  </div>
                 </OrderCard>
               ))
             )}

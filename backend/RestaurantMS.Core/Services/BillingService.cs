@@ -8,11 +8,19 @@ namespace RestaurantMS.Core.Services
     {
         private readonly IBillingRepository _billingRepository;
         private readonly IOrderRepository _orderRepository;
+        private readonly ITableRepository _tableRepository;
+        private readonly IOrderService _orderService;
 
-        public BillingService(IBillingRepository billingRepository, IOrderRepository orderRepository)
+        public BillingService(
+            IBillingRepository billingRepository,
+            IOrderRepository orderRepository,
+            ITableRepository tableRepository,
+            IOrderService orderService)
         {
             _billingRepository = billingRepository;
             _orderRepository = orderRepository;
+            _tableRepository = tableRepository;
+            _orderService = orderService;
         }
 
         public async Task<BillResponseDto?> GenerateBillAsync(int orderId, int cashierId)
@@ -96,19 +104,22 @@ namespace RestaurantMS.Core.Services
 
         public async Task<PaymentResponseDto?> ProcessPaymentAsync(ProcessPaymentDto dto, int cashierId)
         {
-            // 1. Check if bill exists
+            Console.WriteLine($"🟡 === STARTING PAYMENT PROCESS ===");
+            Console.WriteLine($"🟡 BillId: {dto.BillId}, Amount: {dto.Amount}, Method: {dto.Method}");
+
             var bill = await _billingRepository.GetByIdAsync(dto.BillId);
             if (bill == null)
                 throw new ArgumentException("Bill not found");
 
-            // 2. Check if bill is already paid
+            Console.WriteLine($"🟡 Bill found: Id={bill.Id}, OrderId={bill.OrderId}, Status={bill.Status}");
+
             if (bill.Status == "Paid")
                 throw new InvalidOperationException("This bill has already been paid");
 
-            // 3. Check if payment already exists
             var existingPayment = await _billingRepository.GetPaymentByBillIdAsync(dto.BillId);
             if (existingPayment != null)
             {
+                Console.WriteLine($"⚠️ Payment already exists for BillId: {dto.BillId}");
                 return new PaymentResponseDto
                 {
                     Id = existingPayment.Id,
@@ -121,11 +132,9 @@ namespace RestaurantMS.Core.Services
                 };
             }
 
-            // 4. Validate amount
             if (Math.Abs(dto.Amount - bill.Total) > 0.01m)
                 throw new ArgumentException($"Payment amount (₱{dto.Amount:F2}) does not match bill total (₱{bill.Total:F2})");
 
-            // 5. Create payment
             var payment = new Payment
             {
                 BillId = dto.BillId,
@@ -137,22 +146,41 @@ namespace RestaurantMS.Core.Services
             };
 
             await _billingRepository.AddPaymentAsync(payment);
+            Console.WriteLine($"✅ Payment created: Id={payment.Id}");
 
             bill.Status = "Paid";
             await _billingRepository.UpdateAsync(bill);
+            Console.WriteLine($"✅ Bill updated: Id={bill.Id}, Status={bill.Status}");
 
-            var order = await _orderRepository.GetByIdAsync(bill.OrderId);
-            if (order != null)
+            Console.WriteLine($"🟡 Updating order status to 'Served'... OrderId: {bill.OrderId}");
+
+            try
             {
-                order.Status = "Completed";
-                order.UpdatedAt = DateTime.UtcNow;
-                await _orderRepository.UpdateAsync(order);
-                Console.WriteLine($"✅ Order #{order.Id} status updated to 'Completed'");
+                var result = await _orderService.UpdateOrderStatusAsync(bill.OrderId, "Served");
+
+                if (result)
+                {
+                    Console.WriteLine($"✅ Order #{bill.OrderId} status updated to 'Served' via OrderService");
+                }
+                else
+                {
+                    Console.WriteLine($"❌ OrderService failed to update order #{bill.OrderId}");
+                    await UpdateOrderDirectlyAsync(bill.OrderId);
+                }
             }
-            else
+            catch (Exception ex)
             {
-                Console.WriteLine($"❌ Order not found for BillId: {dto.BillId}, OrderId: {bill.OrderId}");
+                Console.WriteLine($"❌ Error updating order via OrderService: {ex.Message}");
+                await UpdateOrderDirectlyAsync(bill.OrderId);
             }
+
+            var verifyOrder = await _orderRepository.GetByIdAsync(bill.OrderId);
+            if (verifyOrder != null)
+            {
+                Console.WriteLine($"✅ VERIFICATION: Order {verifyOrder.Id} status is now: '{verifyOrder.Status}'");
+            }
+
+            Console.WriteLine($"🟡 === PAYMENT PROCESS COMPLETED ===");
 
             return new PaymentResponseDto
             {
@@ -164,6 +192,38 @@ namespace RestaurantMS.Core.Services
                 CreatedAt = payment.CreatedAt,
                 Message = "Payment processed successfully"
             };
+        }
+
+        private async Task UpdateOrderDirectlyAsync(int orderId)
+        {
+            try
+            {
+                var order = await _orderRepository.GetByIdAsync(orderId);
+                if (order != null)
+                {
+                    order.Status = "Served";
+                    order.UpdatedAt = DateTime.UtcNow;
+                    await _orderRepository.UpdateAsync(order);
+                    Console.WriteLine($"✅ Order updated via repository: {order.Id}");
+
+                    if (order.TableId > 0)
+                    {
+                        var table = await _tableRepository.GetByIdAsync(order.TableId);
+                        if (table != null)
+                        {
+                            table.Status = "Available";
+                            table.ReservedBy = null;
+                            table.UpdatedAt = DateTime.UtcNow;
+                            await _tableRepository.UpdateAsync(table);
+                            Console.WriteLine($"✅ Table updated via repository: {table.Id}");
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Fallback update failed: {ex.Message}");
+            }
         }
 
         public async Task<List<BillResponseDto>> GetPaidBillsAsync()

@@ -83,10 +83,30 @@ namespace RestaurantMS.Core.Services
             var order = await _orderRepository.GetByIdAsync(id);
             if (order == null) return false;
 
+            // ✅ FIX: Validate status transitions - PREVENT kitchen from marking as "Served"
+            var validTransitions = new Dictionary<string, string[]>
+            {
+                { "Pending", new[] { "Cooking", "Cancelled" } },
+                { "Cooking", new[] { "Ready", "Cancelled" } },
+                { "Ready", new[] { "Cancelled" } },
+                { "Served", new string[] { } },
+                { "Cancelled", new string[] { } }
+            };
+
+            // ✅ Check if transition is allowed
+            if (validTransitions.ContainsKey(order.Status) &&
+                !validTransitions[order.Status].Contains(status))
+            {
+                throw new InvalidOperationException(
+                    $"Cannot transition from '{order.Status}' to '{status}'. " +
+                    $"Allowed transitions: {string.Join(", ", validTransitions[order.Status])}"
+                );
+            }
+
             order.Status = status;
             order.UpdatedAt = DateTime.UtcNow;
 
-            // Deduct inventory when kitchen starts cooking, exactly once per order
+            // Deduct inventory when kitchen starts cooking
             if (status == "Cooking" && !order.InventoryDeducted)
             {
                 await DeductInventoryForOrderAsync(order);
@@ -95,6 +115,7 @@ namespace RestaurantMS.Core.Services
 
             await _orderRepository.UpdateAsync(order);
 
+            // ✅ Only free table when status is "Served" (which only happens after payment)
             if (status == "Served")
             {
                 var table = await _tableRepository.GetByIdAsync(order.TableId);

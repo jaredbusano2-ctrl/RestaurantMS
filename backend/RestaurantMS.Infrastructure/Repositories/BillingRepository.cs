@@ -36,19 +36,27 @@ namespace RestaurantMS.Infrastructure.Repositories
         public async Task AddAsync(Bill bill)
         {
             await _context.Bills.AddAsync(bill);
-            await _context.SaveChangesAsync();
+            var result = await _context.SaveChangesAsync();
+            Console.WriteLine($"✅ Bill added: {bill.Id}, Rows affected: {result}");
         }
 
         public async Task UpdateAsync(Bill bill)
         {
             _context.Bills.Update(bill);
-            await _context.SaveChangesAsync();
+            var result = await _context.SaveChangesAsync();
+            Console.WriteLine($"✅ Bill updated: {bill.Id}, Rows affected: {result}");
+
+            if (result == 0)
+            {
+                Console.WriteLine($"⚠️ WARNING: No rows were updated for bill {bill.Id}!");
+            }
         }
 
         public async Task AddPaymentAsync(Payment payment)
         {
             await _context.Payments.AddAsync(payment);
-            await _context.SaveChangesAsync();
+            var result = await _context.SaveChangesAsync();
+            Console.WriteLine($"✅ Payment added: {payment.Id}, Rows affected: {result}");
         }
 
         public async Task<List<Bill>> GetPaidBillsAsync()
@@ -87,7 +95,7 @@ namespace RestaurantMS.Infrastructure.Repositories
             await _context.SaveChangesAsync();
             return true;
         }
-        
+
         public async Task<int> DeleteAllPaidAsync()
         {
             var paidBills = await _context.Bills

@@ -21,8 +21,10 @@ const Dashboard = () => {
   const [stats, setStats] = useState({
     totalOrders: 0,
     pendingOrders: 0,
+    cookingOrders: 0,
+    readyOrders: 0,
     availableTables: 0,
-    occupiedTables: 0,
+    totalTables: 0,
     lowStockItems: 0,
     totalRevenue: 0,
     todayOrders: 0,
@@ -104,7 +106,7 @@ const Dashboard = () => {
         promises.push(
           axiosInstance
             .get(
-              `/api/reports/items?from=${from.toISOString()}&to=${today.toISOString()}`,
+              `/api/reports/top-items?from=${from.toISOString()}&to=${today.toISOString()}`,
             )
             .catch(() => ({ data: { data: [] } })),
         );
@@ -121,6 +123,17 @@ const Dashboard = () => {
       const lowStock = lowStockRes.data.data || [];
       const reports = reportsRes.data.data || [];
       const items = itemsRes.data.data || [];
+
+      let formattedTopItems = [];
+      if (items && items.length > 0) {
+        formattedTopItems = items.map(item => ({
+          itemName: item.name || item.menuItemName || item.itemName || `Item ${item.id}`,
+          totalQuantitySold: item.totalSold || item.quantity || item.totalQuantitySold || 0,
+          totalRevenue: item.revenue || item.totalRevenue || 0,
+        }));
+      } else {
+        formattedTopItems = getTopItemsFromOrders(orders);
+      }
 
       setStats({
         totalOrders: orders.length,
@@ -139,12 +152,37 @@ const Dashboard = () => {
 
       setRecentOrders(orders.slice(0, 20));
       setCurrentPage(1);
-      setTopItems(items.slice(0, 5));
+      setTopItems(formattedTopItems.slice(0, 5));
     } catch (err) {
-      console.error(err);
+      console.error("Error fetching dashboard data:", err);
     } finally {
       setLoading(false);
     }
+  };
+
+  const getTopItemsFromOrders = (orders) => {
+    const itemMap = {};
+    
+    orders.forEach(order => {
+      if (order.items && order.items.length > 0) {
+        order.items.forEach(item => {
+          const name = item.menuItemName || item.name || `Item ${item.menuItemId}`;
+          if (!itemMap[name]) {
+            itemMap[name] = {
+              itemName: name,
+              totalQuantitySold: 0,
+              totalRevenue: 0,
+            };
+          }
+          itemMap[name].totalQuantitySold += item.quantity || 1;
+          itemMap[name].totalRevenue += (item.quantity || 1) * (item.unitPrice || 0);
+        });
+      }
+    });
+
+    return Object.values(itemMap)
+      .sort((a, b) => b.totalQuantitySold - a.totalQuantitySold)
+      .slice(0, 10);
   };
 
   const statusColor = {
@@ -446,7 +484,12 @@ const Dashboard = () => {
                           tick={{ fontSize: 11 }}
                           width={90}
                         />
-                        <Tooltip />
+                        <Tooltip
+                          formatter={(value, name) => {
+                            if (name === 'totalQuantitySold') return [`${value} sold`, 'Quantity'];
+                            return [value, name];
+                          }}
+                        />
                         <Bar
                           dataKey="totalQuantitySold"
                           fill="#dc2626"
@@ -455,8 +498,9 @@ const Dashboard = () => {
                       </BarChart>
                     </ResponsiveContainer>
                   ) : (
-                    <div className="chart-empty" style={{ height: 200 }}>
-                      No sales data yet
+                    <div className="chart-empty" style={{ height: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
+                      <i className="ti ti-chart-bar" style={{ fontSize: 40, color: '#9ca3af' }} />
+                      <p style={{ color: '#9ca3af', marginTop: 10 }}>No sales data yet</p>
                     </div>
                   )}
 
@@ -695,31 +739,6 @@ const Dashboard = () => {
                 <h2 className="section-title">Quick Actions</h2>
                 <div className="action-grid">
                   <div
-                    className="stat-icon"
-                    style={{ background: "#fef2f2", color: "#dc2626" }}
-                  >
-                    <i className="ti ti-cash" />
-                  </div>
-                  <div
-                    className="stat-icon"
-                    style={{ background: "#eff6ff", color: "#2563eb" }}
-                  >
-                    <i className="ti ti-receipt" />
-                  </div>
-                  <div
-                    className="stat-icon"
-                    style={{ background: "#d1fae5", color: "#065f46" }}
-                  >
-                    <i className="ti ti-circle-check" />
-                  </div>
-                  <div
-                    className="stat-icon"
-                    style={{ background: "#fef3c7", color: "#92400e" }}
-                  >
-                    <i className="ti ti-clock-hour-4" />
-                  </div>
-                  ...
-                  <div
                     className="action-card"
                     onClick={() => navigate("/billing")}
                   >
@@ -809,35 +828,6 @@ const Dashboard = () => {
               <div className="quick-actions">
                 <h2 className="section-title">Quick Actions</h2>
                 <div className="action-grid">
-                  <div
-                    className="stat-icon"
-                    style={{ background: "#fef3c7", color: "#92400e" }}
-                  >
-                    <i className="ti ti-clock-hour-4" />
-                  </div>
-                  <div
-                    className="stat-icon"
-                    style={{ background: "#dbeafe", color: "#1e40af" }}
-                  >
-                    <i className="ti ti-chef-hat" />
-                  </div>
-                  <div
-                    className="stat-icon"
-                    style={{ background: "#d1fae5", color: "#065f46" }}
-                  >
-                    <i className="ti ti-circle-check" />
-                  </div>
-                  <div
-                    className="stat-icon"
-                    style={{
-                      background:
-                        stats.lowStockItems > 0 ? "#fef2f2" : "#f0fdf4",
-                      color: stats.lowStockItems > 0 ? "#dc2626" : "#16a34a",
-                    }}
-                  >
-                    <i className="ti ti-package" />
-                  </div>
-                  ...
                   <div
                     className="action-card"
                     onClick={() => navigate("/kitchen")}

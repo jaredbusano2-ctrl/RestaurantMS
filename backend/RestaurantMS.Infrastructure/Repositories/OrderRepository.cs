@@ -67,7 +67,16 @@ namespace RestaurantMS.Infrastructure.Repositories
         public async Task UpdateAsync(Order order)
         {
             _context.Orders.Update(order);
-            await _context.SaveChangesAsync();
+            
+            // ✅ FIX: Only call SaveChangesAsync ONCE
+            var result = await _context.SaveChangesAsync();
+            Console.WriteLine($"✅ Order updated: {order.Id}, Rows affected: {result}");
+            
+            // Optional: Log warning if no rows were updated
+            if (result == 0)
+            {
+                Console.WriteLine($"⚠️ WARNING: No rows were updated for order {order.Id}!");
+            }
         }
     }
 }

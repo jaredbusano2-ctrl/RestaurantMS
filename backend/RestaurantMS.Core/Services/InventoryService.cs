@@ -74,9 +74,9 @@ namespace RestaurantMS.Core.Services
             return true;
         }
 
-        public async Task<bool> DeleteItemAsync(int id)
+        public async Task<bool> ArchiveItemAsync(int id)
         {
-            return await _inventoryRepository.DeleteAsync(id);
+            return await _inventoryRepository.ArchiveAsync(id);
         }
 
         private static InventoryResponseDto MapToDto(InventoryItem i) => new()
@@ -88,5 +88,16 @@ namespace RestaurantMS.Core.Services
             MinimumStock = i.MinimumStock,
             LastUpdated = i.LastUpdated
         };
+
+        public async Task<List<InventoryResponseDto>> GetArchivedItemsAsync()
+        {
+            var items = await _inventoryRepository.GetArchivedAsync();
+            return items.Select(MapToDto).ToList();
+        }
+
+        public async Task<bool> UnarchiveItemAsync(int id)
+        {
+            return await _inventoryRepository.UnarchiveAsync(id);
+        }
     }
 }

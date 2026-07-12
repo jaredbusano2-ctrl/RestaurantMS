@@ -64,7 +64,7 @@ namespace RestaurantMS.API.Controllers
         }
 
         [HttpPost("upload-image")]
-        [Authorize(Roles = "Admin,SuperAdmin")]
+        [Authorize(Roles = "Admin,SuperAdmin,Manager")]
         public async Task<IActionResult> UploadImage(IFormFile file)
         {
             try
@@ -100,7 +100,7 @@ namespace RestaurantMS.API.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Admin,SuperAdmin")]
+        [Authorize(Roles = "Admin,SuperAdmin,Manager")]
         public async Task<IActionResult> Create([FromBody] CreateMenuItemDto dto)
         {
             try
@@ -115,7 +115,7 @@ namespace RestaurantMS.API.Controllers
         }
 
         [HttpPut("{id}")]
-        [Authorize(Roles = "Admin,SuperAdmin")]
+        [Authorize(Roles = "Admin,SuperAdmin,Manager")]
         public async Task<IActionResult> Update(int id, [FromBody] UpdateMenuItemDto dto)
         {
             try
@@ -132,7 +132,7 @@ namespace RestaurantMS.API.Controllers
         }
 
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin,SuperAdmin")]
+        [Authorize(Roles = "Admin,SuperAdmin,Manager")]
         public async Task<IActionResult> Delete(int id)
         {
             try

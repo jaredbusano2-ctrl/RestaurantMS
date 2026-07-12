@@ -3,6 +3,7 @@
     "@microsoft/signalr": "^10.0.0",
     "axios": "^1.17.0",
     "react-router-dom": "^7.17.0",
-    "recharts": "^3.8.1"
+    "recharts": "^3.8.1",
+    "sweetalert2": "^11.26.25"
   }
 }

@@ -333,7 +333,9 @@ const MenuList = () => {
                       <FiImage size={28} color="#9ca3af" />
                     )}
                   </div>
-                  <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                  <div
+                    style={{ display: "flex", gap: 8, alignItems: "center" }}
+                  >
                     <label
                       className="btn-secondary"
                       style={{
@@ -455,22 +457,28 @@ const MenuList = () => {
                 />
               </div>
               <div className="form-group">
-                <label
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 8,
-                    cursor: "pointer",
-                  }}
-                >
-                  <input
-                    type="checkbox"
-                    checked={form.isAvailable}
-                    onChange={(e) =>
-                      setForm({ ...form, isAvailable: e.target.checked })
-                    }
-                  />
-                  Available
+                <label className="toggle-label">
+                  <span className="toggle-label-text">Status</span>
+                  <div className="toggle-container">
+                    <input
+                      type="checkbox"
+                      checked={form.isAvailable}
+                      onChange={(e) =>
+                        setForm({ ...form, isAvailable: e.target.checked })
+                      }
+                      className="toggle-input"
+                    />
+                    <div
+                      className={`toggle-slider ${form.isAvailable ? "active" : ""}`}
+                    >
+                      <div className="toggle-knob"></div>
+                    </div>
+                    <span
+                      className={`toggle-status ${form.isAvailable ? "active" : ""}`}
+                    >
+                      {form.isAvailable ? "Available" : "Unavailable"}
+                    </span>
+                  </div>
                 </label>
               </div>
               <div className="modal-footer">

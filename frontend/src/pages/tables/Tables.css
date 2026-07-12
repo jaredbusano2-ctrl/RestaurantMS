@@ -156,7 +156,13 @@
 .stat-occupied .table-stat-icon { background: var(--red-light); color: var(--red); }
 .stat-reserved .table-stat-icon { background: var(--amber-light); color: var(--amber-dark); }
 
-.table-stat-info { display: flex; flex-direction: column; gap: 1px; }
+.table-stat-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin-left: auto;
+  text-align: right;
+}
 
 .table-stat-num {
   font-size: 26px;

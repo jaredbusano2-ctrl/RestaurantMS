@@ -96,6 +96,15 @@
   box-shadow: var(--shadow-sm);
 }
 
+.inv-action-warning {
+  color: #b45309;
+  border-color: #fde68a;
+}
+.inv-action-warning:hover {
+  background: #fef3c7;
+  border-color: #fbbf24;
+}
+
 /* ── Table - same as Orders ── */
 .orders-table {
   width: 100%;

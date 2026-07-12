@@ -39,7 +39,79 @@
   align-items: center;
   gap: 4px;
 }
+/* Toggle Switch Styles */
+.toggle-label {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 12px 16px !important;
+  background: #f8fafc !important;
+  border-radius: 8px !important;
+  border: 1px solid #e2e8f0 !important;
+  cursor: pointer !important;
+  width: 100% !important;
+}
 
+.toggle-label-text {
+  font-weight: 500 !important;
+  color: #1e293b !important;
+}
+
+.toggle-container {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+}
+
+.toggle-input {
+  display: none !important;
+}
+
+.toggle-slider {
+  width: 48px !important;
+  height: 26px !important;
+  background: #cbd5e1 !important;
+  border-radius: 13px !important;
+  position: relative !important;
+  transition: all 0.3s ease !important;
+  cursor: pointer !important;
+  flex-shrink: 0 !important;
+}
+
+.toggle-slider.active {
+  background: #22c55e !important;
+}
+
+.toggle-knob {
+  width: 20px !important;
+  height: 20px !important;
+  background: white !important;
+  border-radius: 50% !important;
+  position: absolute !important;
+  top: 3px !important;
+  left: 3px !important;
+  transition: all 0.3s ease !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.toggle-slider.active .toggle-knob {
+  left: 25px !important;
+}
+
+.toggle-status {
+  font-weight: 500 !important;
+  font-size: 14px !important;
+  transition: color 0.3s ease !important;
+  min-width: 80px !important;
+}
+
+.toggle-status.active {
+  color: #16a34a !important;
+}
+
+.toggle-status:not(.active) {
+  color: #94a3b8 !important;
+}
 .btn-remove:hover {
   background: #fef2f2;
   border-color: #fecaca;

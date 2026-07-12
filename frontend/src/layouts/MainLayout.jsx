@@ -1,41 +1,133 @@
-﻿import { useState } from "react";
+﻿import { useState, useEffect, useCallback } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { FiLogOut, FiSearch, FiBell, FiMenu } from "react-icons/fi";
+import { FiLogOut, FiBell, FiMenu } from "react-icons/fi";
 import { useAuth } from "../hooks/useAuth";
-import { getSidebarLinks } from "../utils/roleGuard";
+import { getSidebarLinks, ROLES } from "../utils/roleGuard";
+import axiosInstance from "../utils/axiosInstance";
 import ConfirmDialog from "../components/Modal/ConfirmDialog";
 import "./MainLayout.css";
+
+const timeAgo = (dateStr) => {
+  const diffMs = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diffMs / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins} min ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs} hr${hrs > 1 ? "s" : ""} ago`;
+  const days = Math.floor(hrs / 24);
+  return `${days} day${days > 1 ? "s" : ""} ago`;
+};
 
 const MainLayout = ({ children }) => {
   const { user, role, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(
+    () => window.innerWidth >= 1024,
+  );
   const [logoutConfirm, setLogoutConfirm] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
   const [notificationsOpen, setNotificationsOpen] = useState(false);
-  const [notifications, setNotifications] = useState([
-    {
-      id: 1,
-      message: "New order from Table 5",
-      time: "5 min ago",
-      type: "order",
-    },
-    {
-      id: 2,
-      message: "Inventory low: Chicken",
-      time: "15 min ago",
-      type: "inventory",
-    },
-    {
-      id: 3,
-      message: "Payment pending at Table 8",
-      time: "30 min ago",
-      type: "payment",
-    },
-  ]);
+  const [notifications, setNotifications] = useState([]);
+  const [dismissedIds, setDismissedIds] = useState(() => new Set());
 
   const links = getSidebarLinks(role);
+
+  const canSeeOrders = [
+    ROLES.SUPER_ADMIN,
+    ROLES.ADMIN,
+    ROLES.MANAGER,
+    ROLES.WAITER,
+  ].includes(role);
+
+  const canSeeInventory = [
+    ROLES.SUPER_ADMIN,
+    ROLES.ADMIN,
+    ROLES.MANAGER,
+    ROLES.KITCHEN_STAFF,
+  ].includes(role);
+
+  const fetchNotifications = useCallback(async () => {
+    try {
+      const requests = [];
+
+      requests.push(
+        canSeeOrders
+          ? axiosInstance
+              .get("/api/orders/status/Pending")
+              .catch(() => ({ data: { data: [] } }))
+          : Promise.resolve({ data: { data: [] } }),
+      );
+
+      requests.push(
+        canSeeInventory
+          ? axiosInstance
+              .get("/api/inventory/low-stock")
+              .catch(() => ({ data: { data: [] } }))
+          : Promise.resolve({ data: { data: [] } }),
+      );
+
+      requests.push(
+        role === ROLES.CASHIER
+          ? axiosInstance
+              .get("/api/orders/status/Ready")
+              .catch(() => ({ data: { data: [] } }))
+          : Promise.resolve({ data: { data: [] } }),
+      );
+
+      const [pendingRes, lowStockRes, readyForBillingRes] =
+        await Promise.all(requests);
+      const pendingOrders = pendingRes.data.data || [];
+      const lowStockItems = lowStockRes.data.data || [];
+      const readyOrders = readyForBillingRes.data.data || [];
+
+      const orderNotifs = pendingOrders.map((o) => ({
+        id: `order-${o.id}`,
+        message: `New order from Table ${o.tableNumber}`,
+        time: timeAgo(o.createdAt),
+        rawTime: o.createdAt,
+        type: "order",
+      }));
+
+      const inventoryNotifs = lowStockItems.map((item) => ({
+        id: `inventory-${item.id}`,
+        message: `Inventory low: ${item.name} (${item.currentStock}${item.unit ? " " + item.unit : ""} left)`,
+        time: timeAgo(item.lastUpdated || item.createdAt || new Date()),
+        rawTime: item.lastUpdated || item.createdAt || new Date().toISOString(),
+        type: "inventory",
+      }));
+
+      const billingNotifs = readyOrders.map((o) => ({
+        id: `billing-${o.id}`,
+        message: `Table ${o.tableNumber} is ready for billing`,
+        time: timeAgo(o.createdAt),
+        rawTime: o.createdAt,
+        type: "payment",
+      }));
+
+      const combined = [...orderNotifs, ...inventoryNotifs, ...billingNotifs]
+        .filter((n) => !dismissedIds.has(n.id))
+        .sort((a, b) => new Date(b.rawTime) - new Date(a.rawTime));
+
+      setNotifications(combined);
+    } catch (err) {
+      console.error("Error fetching notifications:", err);
+    }
+  }, [canSeeOrders, canSeeInventory, role, dismissedIds]);
+
+  useEffect(() => {
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 30000); // poll every 30s
+    return () => clearInterval(interval);
+  }, [fetchNotifications]);
+
+  const handleClearAll = () => {
+    setDismissedIds((prev) => {
+      const next = new Set(prev);
+      notifications.forEach((n) => next.add(n.id));
+      return next;
+    });
+    setNotifications([]);
+  };
 
   const handleLogoutClick = () => setLogoutConfirm(true);
   const handleConfirmLogout = () => {
@@ -108,6 +200,12 @@ const MainLayout = ({ children }) => {
         </div>
       </aside>
 
+      {sidebarOpen && window.innerWidth < 1024 && window.innerWidth >= 768 && (
+        <div
+          className="sidebar-backdrop"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
       <div className="layout-main">
         <header className="topbar">
           <div className="topbar-left">
@@ -121,19 +219,6 @@ const MainLayout = ({ children }) => {
               <span className="topbar-branch-label">{user.branch}</span>
             )}
           </div>
-
-          <div className="topbar-center">
-            <div className="topbar-search">
-              <FiSearch size={18} className="search-icon" />
-              <input
-                type="text"
-                placeholder="Search orders, items, tables..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-          </div>
-
           <div className="topbar-right">
             <div className="topbar-notifications">
               <button
@@ -141,9 +226,11 @@ const MainLayout = ({ children }) => {
                 onClick={() => setNotificationsOpen(!notificationsOpen)}
               >
                 <FiBell size={20} />
-                <span className="notification-badge">
-                  {notifications.length}
-                </span>
+                {notifications.length > 0 && (
+                  <span className="notification-badge">
+                    {notifications.length}
+                  </span>
+                )}
               </button>
 
               {notificationsOpen && (
@@ -152,7 +239,7 @@ const MainLayout = ({ children }) => {
                     <h3>Notifications</h3>
                     <button
                       className="notifications-clear"
-                      onClick={() => setNotifications([])}
+                      onClick={handleClearAll}
                     >
                       Clear all
                     </button>

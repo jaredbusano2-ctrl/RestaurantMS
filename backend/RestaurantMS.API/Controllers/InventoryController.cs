@@ -49,7 +49,7 @@ namespace RestaurantMS.API.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Admin,SuperAdmin")]
+        [Authorize(Roles = "Admin,SuperAdmin,Manager,KitchenStaff")]
         public async Task<IActionResult> Create([FromBody] CreateInventoryDto dto)
         {
             try
@@ -64,7 +64,7 @@ namespace RestaurantMS.API.Controllers
         }
 
         [HttpPut("{id}")]
-        [Authorize(Roles = "Admin,SuperAdmin")]
+        [Authorize(Roles = "Admin,SuperAdmin,Manager,KitchenStaff")]
         public async Task<IActionResult> UpdateStock(int id, [FromBody] UpdateInventoryDto dto)
         {
             try
@@ -81,16 +81,52 @@ namespace RestaurantMS.API.Controllers
             }
         }
 
-        [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin,SuperAdmin")]
-        public async Task<IActionResult> Delete(int id)
+        [HttpPut("{id}/archive")]
+        [Authorize(Roles = "Admin,SuperAdmin,Manager,KitchenStaff")]
+        public async Task<IActionResult> Archive(int id)
         {
             try
             {
-                var result = await _inventoryService.DeleteItemAsync(id);
+                var result = await _inventoryService.ArchiveItemAsync(id);
                 if (!result)
                     return NotFound(ApiResponse<string>.Fail("Inventory item not found."));
-                return Ok(ApiResponse<string>.Ok("Inventory item deleted."));
+                return Ok(ApiResponse<string>.Ok("Inventory item archived."));
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ApiResponse<string>.Fail(ex.Message));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ApiResponse<string>.Fail(ex.Message));
+            }
+        }
+        
+        [HttpGet("archived")]
+        [Authorize(Roles = "Admin,SuperAdmin,Manager,KitchenStaff")]
+        public async Task<IActionResult> GetArchived()
+        {
+            try
+            {
+                var items = await _inventoryService.GetArchivedItemsAsync();
+                return Ok(ApiResponse<List<InventoryResponseDto>>.Ok(items));
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ApiResponse<string>.Fail(ex.Message));
+            }
+        }
+
+        [HttpPut("{id}/unarchive")]
+        [Authorize(Roles = "Admin,SuperAdmin,Manager,KitchenStaff")]
+        public async Task<IActionResult> Unarchive(int id)
+        {
+            try
+            {
+                var result = await _inventoryService.UnarchiveItemAsync(id);
+                if (!result)
+                    return NotFound(ApiResponse<string>.Fail("Inventory item not found."));
+                return Ok(ApiResponse<string>.Ok("Inventory item restored."));
             }
             catch (Exception ex)
             {

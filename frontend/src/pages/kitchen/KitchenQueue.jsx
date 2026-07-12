@@ -124,7 +124,6 @@ const KitchenQueue = () => {
     }
   };
   const formatTime = (seconds = 0) => {
-
     const MAX_SECONDS = 1800; // 30 minutes
     if (seconds > MAX_SECONDS) {
       seconds = MAX_SECONDS;
@@ -224,7 +223,7 @@ const KitchenQueue = () => {
         </div>
       )}
 
-      <div className="table-stats" style={{ maxWidth: 560 }}>
+      <div className="table-stats kitchen-stats">
         <div className="table-stat">
           <div
             className="table-stat-icon"
@@ -274,18 +273,7 @@ const KitchenQueue = () => {
       ) : (
         <div className="kitchen-columns">
           <div className="kitchen-column">
-            <div className="kitchen-column-header pending">
-              <span>
-                <i className="ti ti-clock-hour-4" aria-hidden="true" /> Pending
-              </span>
-              <span className="column-count">{pending.length}</span>
-            </div>
-            {pending.length === 0 ? (
-              <div className="kitchen-empty">
-                <i className="ti ti-confetti" aria-hidden="true" /> No pending
-                orders
-              </div>
-            ) : (
+            {pending.length > 0 &&
               pending.map((order) => (
                 <OrderCard key={order.id} order={order}>
                   <button
@@ -296,84 +284,39 @@ const KitchenQueue = () => {
                     {updating === order.id ? "..." : "Start Cooking"}
                   </button>
                 </OrderCard>
-              ))
-            )}
+              ))}
           </div>
-
           <div className="kitchen-column">
-            <div className="kitchen-column-header cooking">
-              <span>
-                <i className="ti ti-chef-hat" aria-hidden="true" /> Preparing
-              </span>
-              <span className="column-count">{cooking.length}</span>
-            </div>
-            {cooking.length === 0 ? (
-              <div className="kitchen-empty">Nothing preparing</div>
-            ) : (
+            {cooking.length > 0 &&
               cooking.map((order) => (
                 <OrderCard key={order.id} order={order}>
                   <button
                     className="btn-cooking kitchen-btn"
-                    disabled={updating === order.id} // ✅ Only disabled when updating
+                    disabled={updating === order.id}
                     onClick={() => updateStatus(order.id, "Ready")}
                   >
                     {updating === order.id ? "..." : "Mark Ready"}
                   </button>
                 </OrderCard>
-              ))
-            )}
+              ))}
           </div>
 
           <div className="kitchen-column">
-            <div className="kitchen-column-header ready">
-              <span>
-                <i className="ti ti-circle-check" aria-hidden="true" /> Ready
-                for Billing
-              </span>
-              <span className="column-count">{ready.length}</span>
-            </div>
-            {ready.length === 0 ? (
-              <div className="kitchen-empty">No ready orders</div>
-            ) : (
+            {ready.length > 0 &&
               ready.map((order) => (
                 <OrderCard key={order.id} order={order}>
-                  {/* ✅ REMOVE the "Mark as Served" button */}
-                  {/* ❌ DELETE THIS: 
-          <button
-            className="btn-success kitchen-btn"
-            disabled={updating === order.id}
-            onClick={() => updateStatus(order.id, "Served")}
-          >
-            {updating === order.id ? "..." : "✓ Mark as Served"}
-          </button>
-          */}
-
-                  {/* ✅ REPLACE with this info label */}
-                  <div
-                    style={{
-                      background: "#dcfce7",
-                      color: "#15803d",
-                      padding: "8px 12px",
-                      borderRadius: "6px",
-                      fontSize: "13px",
-                      fontWeight: 600,
-                      width: "100%",
-                      textAlign: "center",
-                      border: "1px solid #86efac",
-                    }}
-                  >
-                    <i
-                      className="ti ti-circle-check"
-                      style={{ marginRight: "6px" }}
-                    />
-                    Ready for Billing
+                  <div className="ready-badge-container">
+                    <div className="ready-badge">
+                      <i className="ti ti-circle-check" />
+                      Ready for Billing
+                    </div>
                   </div>
                 </OrderCard>
-              ))
-            )}
+              ))}
           </div>
         </div>
       )}
+
       {errorModal && (
         <div className="modal-overlay" onClick={() => setErrorModal(null)}>
           <div className="modal-box" onClick={(e) => e.stopPropagation()}>

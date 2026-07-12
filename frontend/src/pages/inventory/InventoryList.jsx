@@ -11,9 +11,14 @@ const InventoryList = () => {
   const [loading, setLoading] = useState(true);
   const [editItem, setEditItem] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [deleteTarget, setDeleteTarget] = useState(null);
-  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [archiveTarget, setArchiveTarget] = useState(null);
+  const [archiveLoading, setArchiveLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [archivedItems, setArchivedItems] = useState([]);
+  const [viewMode, setViewMode] = useState("active");
+  const [unarchiveTarget, setUnarchiveTarget] = useState(null);
+  const [unarchiveLoading, setUnarchiveLoading] = useState(false);
+  const [errorModal, setErrorModal] = useState(null);
 
   const emptyForm = {
     name: "",
@@ -39,12 +44,35 @@ const InventoryList = () => {
   const fetchItems = async () => {
     setLoading(true);
     try {
-      const res = await axiosInstance.get("/api/inventory");
-      setItems(res.data.data || []);
+      const [activeRes, archivedRes] = await Promise.all([
+        axiosInstance
+          .get("/api/inventory")
+          .catch(() => ({ data: { data: [] } })),
+        axiosInstance
+          .get("/api/inventory/archived")
+          .catch(() => ({ data: { data: [] } })),
+      ]);
+      setItems(activeRes.data.data || []);
+      setArchivedItems(archivedRes.data.data || []);
     } catch (err) {
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleUnarchiveConfirm = async () => {
+    if (!unarchiveTarget) return;
+    setUnarchiveLoading(true);
+    try {
+      await axiosInstance.put(`/api/inventory/${unarchiveTarget.id}/unarchive`);
+      setUnarchiveTarget(null);
+      fetchItems();
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data?.message || "Failed to restore item.");
+    } finally {
+      setUnarchiveLoading(false);
     }
   };
 
@@ -99,17 +127,19 @@ const InventoryList = () => {
     }
   };
 
-  const handleDeleteConfirm = async () => {
-    if (!deleteTarget) return;
-    setDeleteLoading(true);
+  const handleArchiveConfirm = async () => {
+    if (!archiveTarget) return;
+    setArchiveLoading(true);
     try {
-      await axiosInstance.delete(`/api/inventory/${deleteTarget.id}`);
-      setDeleteTarget(null);
+      await axiosInstance.put(`/api/inventory/${archiveTarget.id}/archive`);
+      setArchiveTarget(null);
       fetchItems();
     } catch (err) {
       console.error(err);
+      setArchiveTarget(null);
+      setErrorModal(err.response?.data?.message || "Failed to archive item.");
     } finally {
-      setDeleteLoading(false);
+      setArchiveLoading(false);
     }
   };
 
@@ -155,6 +185,8 @@ const InventoryList = () => {
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage,
   );
+  const displayedItems =
+    viewMode === "archived" ? archivedItems : paginatedItems;
 
   const UNITS = [
     "pcs",
@@ -283,8 +315,11 @@ const InventoryList = () => {
           {["All", "Good", "Low Stock", "Out of Stock"].map((f) => (
             <button
               key={f}
-              className={`filter-pill ${filter === f ? "active" : ""}`}
-              onClick={() => setFilter(f)}
+              className={`filter-pill ${filter === f && viewMode === "active" ? "active" : ""}`}
+              onClick={() => {
+                setViewMode("active");
+                setFilter(f);
+              }}
             >
               {f}
               <span className="filter-pill-count">
@@ -298,6 +333,13 @@ const InventoryList = () => {
               </span>
             </button>
           ))}
+          <button
+            className={`filter-pill ${viewMode === "archived" ? "active" : ""}`}
+            onClick={() => setViewMode("archived")}
+          >
+            <i className="ti ti-archive" aria-hidden="true" /> Archived
+            <span className="filter-pill-count">{archivedItems.length}</span>
+          </button>
         </div>
       </div>
 
@@ -320,7 +362,7 @@ const InventoryList = () => {
               </tr>
             </thead>
             <tbody>
-              {paginatedItems.map((item) => {
+              {displayedItems.map((item) => {
                 const status = getStatusStyle(item);
                 return (
                   <tr
@@ -422,29 +464,46 @@ const InventoryList = () => {
                           alignItems: "center",
                         }}
                       >
-                        <button
-                          className="inv-action-btn"
-                          onClick={() => handleEdit(item)}
-                        >
-                          <i className="ti ti-pencil" aria-hidden="true" />
-                          <span>Edit</span>
-                        </button>
-                        <button
-                          className="inv-action-btn inv-action-danger"
-                          onClick={() => setDeleteTarget(item)}
-                        >
-                          <i className="ti ti-trash" aria-hidden="true" />
-                          <span>Delete</span>
-                        </button>
+                        {viewMode === "archived" ? (
+                          <button
+                            className="inv-action-btn"
+                            onClick={() => setUnarchiveTarget(item)}
+                          >
+                            <i
+                              className="ti ti-arrow-back-up"
+                              aria-hidden="true"
+                            />
+                            <span>Restore</span>
+                          </button>
+                        ) : (
+                          <>
+                            <button
+                              className="inv-action-btn"
+                              onClick={() => handleEdit(item)}
+                            >
+                              <i className="ti ti-pencil" aria-hidden="true" />
+                              <span>Edit</span>
+                            </button>
+                            <button
+                              className="inv-action-btn inv-action-warning"
+                              onClick={() => setArchiveTarget(item)}
+                            >
+                              <i className="ti ti-archive" aria-hidden="true" />
+                              <span>Archive</span>
+                            </button>
+                          </>
+                        )}
                       </div>
                     </td>
                   </tr>
                 );
               })}
-              {filtered.length === 0 && (
+              {displayedItems.length === 0 && (
                 <tr>
                   <td colSpan="8" className="empty-state">
-                    No inventory items found.
+                    {viewMode === "archived"
+                      ? "No archived items."
+                      : "No inventory items found."}
                   </td>
                 </tr>
               )}
@@ -476,7 +535,7 @@ const InventoryList = () => {
           )}
         </div>
       )}
-      
+
       {/* Add Item Modal */}
       {showAddModal && (
         <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
@@ -704,21 +763,74 @@ const InventoryList = () => {
         </div>
       )}
 
-      {/* Delete Confirmation */}
+      {/* Archive Confirmation */}
       <ConfirmDialog
-        isOpen={!!deleteTarget}
-        title="Delete Inventory Item"
-        message={`Are you sure you want to delete "${deleteTarget?.name}"? This cannot be undone.`}
-        type="delete"
-        confirmText="Delete"
+        isOpen={!!archiveTarget}
+        title="Archive Inventory Item"
+        message={`Archive "${archiveTarget?.name}"? It will be hidden from the active list but its stock history is preserved. You can restore it anytime from the Archived filter.`}
+        type="warning"
+        confirmText="Archive"
         cancelText="Cancel"
-        isLoading={deleteLoading}
-        onConfirm={handleDeleteConfirm}
-        onCancel={() => setDeleteTarget(null)}
+        isLoading={archiveLoading}
+        onConfirm={handleArchiveConfirm}
+        onCancel={() => setArchiveTarget(null)}
       />
+
+      {/* Unarchive Confirmation */}
+      <ConfirmDialog
+        isOpen={!!unarchiveTarget}
+        title="Restore Inventory Item"
+        message={`Restore "${unarchiveTarget?.name}"? It will reappear in the active inventory list.`}
+        type="success"
+        confirmText="Restore"
+        cancelText="Cancel"
+        isLoading={unarchiveLoading}
+        onConfirm={handleUnarchiveConfirm}
+        onCancel={() => setUnarchiveTarget(null)}
+      />
+      {errorModal && (
+        <div className="modal-overlay" onClick={() => setErrorModal(null)}>
+          <div className="modal-box" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Cannot archive item</h3>
+              <button
+                className="modal-close-btn"
+                onClick={() => setErrorModal(null)}
+              >
+                <i className="ti ti-x" aria-hidden="true" />
+              </button>
+            </div>
+            <div
+              className="modal-body"
+              style={{ alignItems: "center", textAlign: "center" }}
+            >
+              <div className="modal-icon-circle danger">
+                <i className="ti ti-alert-triangle" aria-hidden="true" />
+              </div>
+              <p
+                style={{
+                  fontSize: 14,
+                  color: "#6b7280",
+                  margin: 0,
+                  lineHeight: 1.6,
+                }}
+              >
+                {errorModal}
+              </p>
+            </div>
+            <div className="modal-footer" style={{ padding: "16px 20px" }}>
+              <button
+                className="btn-secondary"
+                onClick={() => setErrorModal(null)}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </MainLayout>
   );
 };
 
 export default InventoryList;
-

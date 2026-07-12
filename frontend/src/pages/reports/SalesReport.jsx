@@ -192,7 +192,7 @@ const SalesReport = () => {
       )}
 
       {/* Stat Cards */}
-      <div className="table-stats" style={{ maxWidth: 560 }}>
+      <div className="table-stats" style={{ maxWidth: 1400 }}>
         <div className="table-stat">
           <div
             className="table-stat-icon"

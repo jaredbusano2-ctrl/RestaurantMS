@@ -91,7 +91,6 @@ namespace RestaurantMS.API.Controllers
             }
         }
 
-        // ✅ GET: api/billing/payment/{billId} - Cleaner endpoint
         [HttpGet("payment/{billId}")]
         public async Task<IActionResult> GetPaymentByBillId(int billId)
         {
@@ -109,7 +108,6 @@ namespace RestaurantMS.API.Controllers
             }
         }
 
-        // ✅ GET: api/billing/bill/{billId}/payment - Kept for backward compatibility
         [HttpGet("bill/{billId}/payment")]
         public async Task<IActionResult> GetPaymentByBillIdAlt(int billId)
         {

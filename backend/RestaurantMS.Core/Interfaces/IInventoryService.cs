@@ -9,6 +9,9 @@ namespace RestaurantMS.Core.Interfaces
         Task<List<InventoryResponseDto>> GetLowStockItemsAsync();
         Task<InventoryResponseDto> CreateItemAsync(CreateInventoryDto dto);
         Task<bool> UpdateStockAsync(int id, UpdateInventoryDto dto, int userId);
-        Task<bool> DeleteItemAsync(int id);
+        Task<bool> ArchiveItemAsync(int id);
+        Task<List<InventoryResponseDto>> GetArchivedItemsAsync();
+        Task<bool> UnarchiveItemAsync(int id);
+
     }
 }

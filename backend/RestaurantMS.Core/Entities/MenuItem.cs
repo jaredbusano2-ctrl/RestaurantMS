@@ -41,5 +41,7 @@ namespace RestaurantMS.Core.Entities
         public virtual InventoryItem? InventoryItem { get; set; }
 
         public virtual ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
+
+        public virtual ICollection<MenuItemIngredient> Ingredients { get; set; } = new List<MenuItemIngredient>();
     }
 }

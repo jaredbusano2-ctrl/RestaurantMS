@@ -19,6 +19,7 @@ const InventoryList = () => {
   const [unarchiveTarget, setUnarchiveTarget] = useState(null);
   const [unarchiveLoading, setUnarchiveLoading] = useState(false);
   const [errorModal, setErrorModal] = useState(null);
+  const [menuItems, setMenuItems] = useState([]);
 
   const emptyForm = {
     name: "",
@@ -41,19 +42,29 @@ const InventoryList = () => {
     fetchItems();
   }, []);
 
+  const getUsedInMenuItems = (inventoryItemId) => {
+    return menuItems
+      .filter((m) =>
+        m.ingredients?.some((ing) => ing.inventoryItemId === inventoryItemId),
+      )
+      .map((m) => m.name);
+  };
+
   const fetchItems = async () => {
     setLoading(true);
     try {
-      const [activeRes, archivedRes] = await Promise.all([
+      const [activeRes, archivedRes, menuRes] = await Promise.all([
         axiosInstance
           .get("/api/inventory")
           .catch(() => ({ data: { data: [] } })),
         axiosInstance
           .get("/api/inventory/archived")
           .catch(() => ({ data: { data: [] } })),
+        axiosInstance.get("/api/menu").catch(() => ({ data: { data: [] } })),
       ]);
       setItems(activeRes.data.data || []);
       setArchivedItems(archivedRes.data.data || []);
+      setMenuItems(menuRes.data.data || []);
     } catch (err) {
       console.error(err);
     } finally {
@@ -356,6 +367,7 @@ const InventoryList = () => {
                 <th style={{ width: "20%" }}>Stock Level</th>
                 <th style={{ width: "8%" }}>Current</th>
                 <th style={{ width: "8%" }}>Minimum</th>
+                <th style={{ width: "14%" }}>Used In</th>
                 <th style={{ width: "12%" }}>Status</th>
                 <th style={{ width: "12%" }}>Last Updated</th>
                 <th style={{ width: "15%", paddingLeft: "60px" }}>Actions</th>
@@ -434,6 +446,22 @@ const InventoryList = () => {
                     <td style={{ width: "8%", color: "#6b7280" }}>
                       {item.minimumStock}
                     </td>
+                    <td
+                      style={{ width: "14%", fontSize: 12, color: "#6b7280" }}
+                    >
+                      {(() => {
+                        const usedIn = getUsedInMenuItems(item.id);
+                        if (usedIn.length === 0)
+                          return <span style={{ color: "#d1d5db" }}>—</span>;
+                        if (usedIn.length <= 2) return usedIn.join(", ");
+                        return (
+                          <span title={usedIn.join(", ")}>
+                            {usedIn.slice(0, 2).join(", ")} +{usedIn.length - 2}{" "}
+                            more
+                          </span>
+                        );
+                      })()}
+                    </td>
                     <td style={{ width: "12%" }}>
                       <span
                         className="status-badge"
@@ -500,7 +528,7 @@ const InventoryList = () => {
               })}
               {displayedItems.length === 0 && (
                 <tr>
-                  <td colSpan="8" className="empty-state">
+                  <td colSpan="9" className="empty-state">
                     {viewMode === "archived"
                       ? "No archived items."
                       : "No inventory items found."}

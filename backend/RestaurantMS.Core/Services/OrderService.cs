@@ -158,14 +158,20 @@ namespace RestaurantMS.Core.Services
             foreach (var orderItem in order.OrderItems)
             {
                 var menuItem = await _menuRepository.GetByIdAsync(orderItem.MenuItemId);
-                if (menuItem?.InventoryItemId == null) continue;
+                if (menuItem == null) continue;
 
-                var inventoryItem = await _inventoryRepository.GetByIdAsync(menuItem.InventoryItemId.Value);
-                if (inventoryItem == null) continue;
+                var requirements = GetIngredientRequirements(menuItem);
 
-                if (inventoryItem.CurrentStock < orderItem.Quantity)
+                foreach (var (inventoryItemId, qtyPerUnit) in requirements)
                 {
-                    shortages.Add($"{inventoryItem.Name} (has {inventoryItem.CurrentStock}, needs {orderItem.Quantity})");
+                    var inventoryItem = await _inventoryRepository.GetByIdAsync(inventoryItemId);
+                    if (inventoryItem == null) continue;
+
+                    var neededTotal = qtyPerUnit * orderItem.Quantity;
+                    if (inventoryItem.CurrentStock < neededTotal)
+                    {
+                        shortages.Add($"{inventoryItem.Name} (has {inventoryItem.CurrentStock}, needs {neededTotal})");
+                    }
                 }
             }
 
@@ -177,26 +183,51 @@ namespace RestaurantMS.Core.Services
             foreach (var orderItem in order.OrderItems)
             {
                 var menuItem = await _menuRepository.GetByIdAsync(orderItem.MenuItemId);
-                if (menuItem?.InventoryItemId == null) continue;
+                if (menuItem == null) continue;
 
-                var inventoryItem = await _inventoryRepository.GetByIdAsync(menuItem.InventoryItemId.Value);
-                if (inventoryItem == null) continue;
+                var requirements = GetIngredientRequirements(menuItem);
 
-                var deduction = orderItem.Quantity;
-                inventoryItem.CurrentStock -= deduction;
-                if (inventoryItem.CurrentStock < 0) inventoryItem.CurrentStock = 0;
-                inventoryItem.LastUpdated = DateTime.UtcNow;
-
-                await _inventoryRepository.UpdateAsync(inventoryItem);
-                await _inventoryRepository.AddLogAsync(new InventoryLog
+                foreach (var (inventoryItemId, qtyPerUnit) in requirements)
                 {
-                    InventoryItemId = inventoryItem.Id,
-                    ChangeAmount = -deduction,
-                    Reason = $"Order #{order.Id} - {menuItem.Name} x{orderItem.Quantity}",
-                    OrderId = order.Id,
-                    ChangedBy = order.WaiterId
-                });
+                    var inventoryItem = await _inventoryRepository.GetByIdAsync(inventoryItemId);
+                    if (inventoryItem == null) continue;
+
+                    var deduction = qtyPerUnit * orderItem.Quantity;
+                    inventoryItem.CurrentStock -= deduction;
+                    if (inventoryItem.CurrentStock < 0) inventoryItem.CurrentStock = 0;
+                    inventoryItem.LastUpdated = DateTime.UtcNow;
+
+                    await _inventoryRepository.UpdateAsync(inventoryItem);
+                    await _inventoryRepository.AddLogAsync(new InventoryLog
+                    {
+                        InventoryItemId = inventoryItem.Id,
+                        ChangeAmount = -deduction,
+                        Reason = $"Order #{order.Id} - {menuItem.Name} x{orderItem.Quantity}",
+                        OrderId = order.Id,
+                        ChangedBy = order.WaiterId
+                    });
+                }
             }
+        }
+
+        // Returns (InventoryItemId, QuantityRequired) pairs for a menu item.
+        // Uses the new multi-ingredient table if configured; falls back to the
+        // legacy single InventoryItemId link if no ingredients are set up yet.
+        private static List<(int InventoryItemId, decimal QtyPerUnit)> GetIngredientRequirements(MenuItem menuItem)
+        {
+            if (menuItem.Ingredients != null && menuItem.Ingredients.Any())
+            {
+                return menuItem.Ingredients
+                    .Select(i => (i.InventoryItemId, i.QuantityRequired))
+                    .ToList();
+            }
+
+            if (menuItem.InventoryItemId.HasValue)
+            {
+                return new List<(int, decimal)> { (menuItem.InventoryItemId.Value, 1) };
+            }
+
+            return new List<(int, decimal)>();
         }
 
         private static OrderResponseDto MapToDto(Order o) => new()

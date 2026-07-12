@@ -20,6 +20,8 @@ namespace RestaurantMS.Infrastructure.Repositories
                 .Where(m => !m.IsDeleted)
                 .Include(m => m.Category)
                 .Include(m => m.InventoryItem)
+                .Include(m => m.Ingredients)
+                    .ThenInclude(i => i.InventoryItem)
                 .ToListAsync();
         }
 
@@ -29,6 +31,8 @@ namespace RestaurantMS.Infrastructure.Repositories
                 .Where(m => !m.IsDeleted)
                 .Include(m => m.Category)
                 .Include(m => m.InventoryItem)
+                .Include(m => m.Ingredients)
+                    .ThenInclude(i => i.InventoryItem)
                 .FirstOrDefaultAsync(m => m.Id == id);
         }
 
@@ -38,6 +42,8 @@ namespace RestaurantMS.Infrastructure.Repositories
                 .Where(m => !m.IsDeleted && m.CategoryId == categoryId)
                 .Include(m => m.Category)
                 .Include(m => m.InventoryItem)
+                .Include(m => m.Ingredients)
+                    .ThenInclude(i => i.InventoryItem)
                 .ToListAsync();
         }
 

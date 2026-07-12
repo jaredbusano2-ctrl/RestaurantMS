@@ -1,5 +1,12 @@
 import { useState, useEffect } from "react";
-import { FiCheckCircle, FiImage, FiUpload, FiX } from "react-icons/fi";
+import {
+  FiCheckCircle,
+  FiImage,
+  FiUpload,
+  FiX,
+  FiPlus,
+  FiTrash2,
+} from "react-icons/fi";
 import MainLayout from "../../layouts/MainLayout";
 import ConfirmDialog from "../../components/Modal/ConfirmDialog";
 import Modal from "../../components/Modal/Modal";
@@ -7,6 +14,11 @@ import axiosInstance from "../../utils/axiosInstance";
 import "./Menu.css";
 
 const API_BASE = "http://localhost:5000";
+
+const emptyIngredientRow = () => ({
+  inventoryItemId: "",
+  quantityRequired: "",
+});
 
 const MenuList = () => {
   const [items, setItems] = useState([]);
@@ -30,6 +42,7 @@ const MenuList = () => {
     inventoryItemId: "",
     isAvailable: true,
     imageUrl: "",
+    ingredients: [emptyIngredientRow()],
   });
 
   useEffect(() => {
@@ -83,20 +96,50 @@ const MenuList = () => {
     }
   };
 
-  // New function to remove image
   const handleRemoveImage = () => {
     setImagePreview(null);
     setForm((prev) => ({ ...prev, imageUrl: "" }));
   };
 
+  // ── Ingredient row helpers ──
+  const handleIngredientChange = (index, field, value) => {
+    setForm((prev) => {
+      const next = [...prev.ingredients];
+      next[index] = { ...next[index], [field]: value };
+      return { ...prev, ingredients: next };
+    });
+  };
+
+  const addIngredientRow = () => {
+    setForm((prev) => ({
+      ...prev,
+      ingredients: [...prev.ingredients, emptyIngredientRow()],
+    }));
+  };
+
+  const removeIngredientRow = (index) => {
+    setForm((prev) => ({
+      ...prev,
+      ingredients: prev.ingredients.filter((_, i) => i !== index),
+    }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      const cleanIngredients = form.ingredients
+        .filter((row) => row.inventoryItemId && row.quantityRequired)
+        .map((row) => ({
+          inventoryItemId: Number(row.inventoryItemId),
+          quantityRequired: Number(row.quantityRequired),
+        }));
+
       const payload = {
         ...form,
         inventoryItemId: form.inventoryItemId
           ? Number(form.inventoryItemId)
           : null,
+        ingredients: cleanIngredients,
       };
       if (editItem) {
         await axiosInstance.put(`/api/menu/${editItem.id}`, payload);
@@ -136,6 +179,13 @@ const MenuList = () => {
       inventoryItemId: item.inventoryItemId || "",
       isAvailable: item.isAvailable,
       imageUrl: item.imageUrl || "",
+      ingredients:
+        item.ingredients && item.ingredients.length > 0
+          ? item.ingredients.map((i) => ({
+              inventoryItemId: String(i.inventoryItemId),
+              quantityRequired: String(i.quantityRequired),
+            }))
+          : [emptyIngredientRow()],
     });
     setImagePreview(item.imageUrl ? `${API_BASE}${item.imageUrl}` : null);
     setShowModal(true);
@@ -153,6 +203,7 @@ const MenuList = () => {
       inventoryItemId: "",
       isAvailable: true,
       imageUrl: "",
+      ingredients: [emptyIngredientRow()],
     });
   };
 
@@ -214,11 +265,15 @@ const MenuList = () => {
                   <span
                     className={`availability-badge ${item.isAvailable ? "available" : "unavailable"}`}
                   >
-                    {item.isAvailable ? "Available" : "Unavailable"}
+                    {item.isAvailable
+                      ? "Available"
+                      : item.isOutOfStock
+                        ? "Out of Stock"
+                        : "Unavailable"}
                   </span>
                 </div>
                 <span className="menu-category">{item.category}</span>
-                {item.inventoryItemName && (
+                {item.ingredients && item.ingredients.length > 0 ? (
                   <span
                     className="menu-category"
                     style={{
@@ -228,14 +283,41 @@ const MenuList = () => {
                       marginTop: 2,
                       color: "#16a34a",
                     }}
+                    title={item.ingredients
+                      .map(
+                        (i) =>
+                          `${i.inventoryItemName} (${i.quantityRequired} ${i.unit})`,
+                      )
+                      .join(", ")}
                   >
                     <i
                       className="ti ti-package"
                       aria-hidden="true"
                       style={{ fontSize: 13 }}
                     />{" "}
-                    {item.inventoryItemName}
+                    {item.ingredients.length} ingredient
+                    {item.ingredients.length !== 1 ? "s" : ""}
                   </span>
+                ) : (
+                  item.inventoryItemName && (
+                    <span
+                      className="menu-category"
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 4,
+                        marginTop: 2,
+                        color: "#9ca3af",
+                      }}
+                    >
+                      <i
+                        className="ti ti-package"
+                        aria-hidden="true"
+                        style={{ fontSize: 13 }}
+                      />{" "}
+                      {item.inventoryItemName} (legacy link)
+                    </span>
+                  )
                 )}
                 <p className="menu-description">{item.description}</p>
                 <div className="menu-card-footer">
@@ -417,8 +499,102 @@ const MenuList = () => {
                   required
                 />
               </div>
+
+              {/* ── Ingredients / Recipe builder ── */}
               <div className="form-group">
-                <label className="form-label">Inventory Item (Optional)</label>
+                <label className="form-label">Ingredients (Recipe)</label>
+                <span
+                  style={{
+                    fontSize: 12,
+                    color: "#6b7280",
+                    marginBottom: 8,
+                    display: "block",
+                  }}
+                >
+                  Every ingredient listed here gets deducted from inventory in
+                  the quantity you set, whenever this item is ordered.
+                </span>
+                {form.ingredients.map((row, index) => {
+                  const selectedInv = inventoryItems.find(
+                    (inv) => String(inv.id) === String(row.inventoryItemId),
+                  );
+                  return (
+                    <div
+                      key={index}
+                      style={{
+                        display: "flex",
+                        gap: 8,
+                        marginBottom: 8,
+                        alignItems: "center",
+                      }}
+                    >
+                      <select
+                        className="form-input"
+                        style={{ flex: 2 }}
+                        value={row.inventoryItemId}
+                        onChange={(e) =>
+                          handleIngredientChange(
+                            index,
+                            "inventoryItemId",
+                            e.target.value,
+                          )
+                        }
+                      >
+                        <option value="">Select ingredient</option>
+                        {inventoryItems.map((inv) => (
+                          <option key={inv.id} value={inv.id}>
+                            {inv.name} ({inv.currentStock} {inv.unit} in stock)
+                          </option>
+                        ))}
+                      </select>
+                      <input
+                        className="form-input"
+                        style={{ flex: 1 }}
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        placeholder={`Qty${selectedInv ? ` (${selectedInv.unit})` : ""}`}
+                        value={row.quantityRequired}
+                        onChange={(e) =>
+                          handleIngredientChange(
+                            index,
+                            "quantityRequired",
+                            e.target.value,
+                          )
+                        }
+                      />
+                      <button
+                        type="button"
+                        className="btn-icon danger"
+                        onClick={() => removeIngredientRow(index)}
+                        style={{ flexShrink: 0 }}
+                        title="Remove ingredient"
+                      >
+                        <FiTrash2 size={16} />
+                      </button>
+                    </div>
+                  );
+                })}
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={addIngredientRow}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 6,
+                    fontSize: 13,
+                    padding: "6px 12px",
+                  }}
+                >
+                  <FiPlus size={14} /> Add Ingredient
+                </button>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">
+                  Legacy Primary Inventory Item (Optional)
+                </label>
                 <select
                   className="form-input"
                   value={form.inventoryItemId}
@@ -426,7 +602,7 @@ const MenuList = () => {
                     setForm({ ...form, inventoryItemId: e.target.value })
                   }
                 >
-                  <option value="">No inventory link</option>
+                  <option value="">No legacy link</option>
                   {inventoryItems.map((inv) => (
                     <option key={inv.id} value={inv.id}>
                       {inv.name} ({inv.currentStock} {inv.unit} in stock)
@@ -441,10 +617,11 @@ const MenuList = () => {
                     display: "block",
                   }}
                 >
-                  When this item is ordered, 1 unit will be deducted from the
-                  linked inventory per quantity ordered.
+                  Only used as a fallback if no ingredients are set above. Leave
+                  blank once you've added ingredients.
                 </span>
               </div>
+
               <div className="form-group">
                 <label className="form-label">Description</label>
                 <textarea

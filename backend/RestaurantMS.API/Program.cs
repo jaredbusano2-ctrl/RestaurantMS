@@ -58,7 +58,8 @@ builder.Services.AddCors(options =>
 {
     policy.WithOrigins(
             "http://localhost:5173",
-            "https://restaurant-dnkdtsykj-deraj2.vercel.app"
+            "https://restaurant-ms-iota.vercel.app",
+            "https://restaurant-ms-git-main-deraj2.vercel.app"
           )
           .AllowAnyHeader()
           .AllowAnyMethod()

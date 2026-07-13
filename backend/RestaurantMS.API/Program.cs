@@ -87,8 +87,7 @@ builder.Services.AddCors(options =>
         policy.SetIsOriginAllowed(origin =>
                 origin == "http://localhost:5173" ||
                 (Uri.TryCreate(origin, UriKind.Absolute, out var uri) &&
-                 uri.Host.EndsWith(".vercel.app") &&
-                 uri.Host.Contains("deraj2")) // scope it to your project/user slug
+                 uri.Host.EndsWith(".vercel.app")) // <-- Allow ALL Vercel URLs
               )
               .AllowAnyHeader()
               .AllowAnyMethod()

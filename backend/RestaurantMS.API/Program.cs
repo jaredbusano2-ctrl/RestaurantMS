@@ -55,12 +55,15 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReact", policy =>
-    {
-        policy.WithOrigins("http://localhost:5173")
-              .AllowAnyHeader()
-              .AllowAnyMethod()
-              .AllowCredentials();
-    });
+{
+    policy.WithOrigins(
+            "http://localhost:5173",
+            "https://restaurant-dnkdtsykj-deraj2.vercel.app"
+          )
+          .AllowAnyHeader()
+          .AllowAnyMethod()
+          .AllowCredentials();
+});
 });
 
 // SignalR

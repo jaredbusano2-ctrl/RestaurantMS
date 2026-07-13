@@ -94,6 +94,12 @@ builder.Services.AddScoped<IReportService, ReportService>();
 
 var app = builder.Build();
 
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    db.Database.Migrate();
+}
+
 // Ensure uploads directory exists
 var uploadsPath = Path.Combine(builder.Environment.ContentRootPath, "wwwroot", "uploads", "menu");
 Directory.CreateDirectory(uploadsPath);

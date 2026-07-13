@@ -10,11 +10,43 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Database
+// Database - Use environment variables for Railway
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
+// Check for Railway MySQL environment variables
+var host = Environment.GetEnvironmentVariable("MYSQLHOST");
+var port = Environment.GetEnvironmentVariable("MYSQLPORT");
+var database = Environment.GetEnvironmentVariable("MYSQLDATABASE");
+var user = Environment.GetEnvironmentVariable("MYSQLUSER");
+var password = Environment.GetEnvironmentVariable("MYSQLPASSWORD");
+
+// Also check for MYSQL_URL (alternative)
+var mysqlUrl = Environment.GetEnvironmentVariable("MYSQL_URL");
+
+if (!string.IsNullOrEmpty(mysqlUrl))
+{
+    connectionString = mysqlUrl;
+    Console.WriteLine($"✅ Using Railway MySQL via MYSQL_URL");
+}
+else if (!string.IsNullOrEmpty(host) && !string.IsNullOrEmpty(database))
+{
+    connectionString = $"Server={host};Port={port ?? "3306"};Database={database};User={user ?? "root"};Password={password};";
+    Console.WriteLine($"✅ Using Railway MySQL: {host}:{port}/{database}");
+}
+else
+{
+    Console.WriteLine($"ℹ️ Using appsettings connection string");
+}
+
+// Add DbContext with case-insensitive table names fix
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseMySql(
-        builder.Configuration.GetConnectionString("DefaultConnection"),
-        ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("DefaultConnection"))
+        connectionString,
+        ServerVersion.AutoDetect(connectionString),
+        mysqlOptions =>
+        {
+            mysqlOptions.UseLowerCaseTableNames(); // Fix for Linux/MySQL case sensitivity
+        }
     ));
 
 // JWT Authentication

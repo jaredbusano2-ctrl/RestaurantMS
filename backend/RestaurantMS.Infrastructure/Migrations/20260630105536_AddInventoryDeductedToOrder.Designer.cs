@@ -23,7 +23,7 @@ namespace RestaurantMS.Infrastructure.Migrations
                 .HasAnnotation("ProductVersion", "9.0.0")
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
 
-            MySqlModelBuilderExtensions.AutoIncrementColumns(modelBuilder);
+            // MySqlModelBuilderExtensions.AutoIncrementColumns(modelBuilder);  // Commented out for Pomelo 8.0 compatibility
 
             modelBuilder.Entity("RestaurantMS.Core.Entities.AuditLog", b =>
                 {

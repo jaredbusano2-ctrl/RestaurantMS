@@ -38,15 +38,11 @@ else
     Console.WriteLine($"ℹ️ Using appsettings connection string");
 }
 
-// Add DbContext with case-insensitive table names fix
+// Add DbContext WITHOUT UseLowerCaseTableNames
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseMySql(
         connectionString,
-        ServerVersion.AutoDetect(connectionString),
-        mysqlOptions =>
-        {
-            mysqlOptions.UseLowerCaseTableNames(); // Fix for Linux/MySQL case sensitivity
-        }
+        ServerVersion.AutoDetect(connectionString)
     ));
 
 // JWT Authentication

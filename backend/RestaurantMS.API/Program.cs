@@ -55,16 +55,17 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReact", policy =>
-{
-    policy.WithOrigins(
-            "http://localhost:5173",
-            "https://restaurant-ms-iota.vercel.app",
-            "https://restaurant-ms-git-main-deraj2.vercel.app"
-          )
-          .AllowAnyHeader()
-          .AllowAnyMethod()
-          .AllowCredentials();
-});
+    {
+        policy.SetIsOriginAllowed(origin =>
+                origin == "http://localhost:5173" ||
+                (Uri.TryCreate(origin, UriKind.Absolute, out var uri) &&
+                 uri.Host.EndsWith(".vercel.app") &&
+                 uri.Host.Contains("deraj2")) // scope it to your project/user slug
+              )
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
+    });
 });
 
 // SignalR

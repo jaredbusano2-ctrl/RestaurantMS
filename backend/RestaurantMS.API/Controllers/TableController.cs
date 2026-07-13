@@ -48,7 +48,7 @@ namespace RestaurantMS.API.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Admin,SuperAdmin")]
+        [Authorize(Roles = "Admin,SuperAdmin,Manager,Waiter")]
         public async Task<IActionResult> Create([FromBody] CreateTableDto dto)
         {
             try
@@ -63,7 +63,7 @@ namespace RestaurantMS.API.Controllers
         }
 
         [HttpPut("{id}/status")]
-        [Authorize(Roles = "Admin,SuperAdmin,Waiter")]
+        [Authorize(Roles = "Admin,SuperAdmin,Manager,Waiter")]
         public async Task<IActionResult> UpdateStatus(int id, [FromBody] UpdateTableStatusDto dto)
         {
             try
@@ -80,7 +80,7 @@ namespace RestaurantMS.API.Controllers
         }
 
         [HttpDelete("{id}/status")]
-        [Authorize(Roles = "Admin,SuperAdmin")]
+        [Authorize(Roles = "Admin,SuperAdmin,Manager,Waiter")]
         public async Task<IActionResult> Delete(int id)
         {
             try

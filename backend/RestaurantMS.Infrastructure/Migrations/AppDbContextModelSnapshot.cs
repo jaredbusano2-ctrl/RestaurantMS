@@ -121,6 +121,9 @@ namespace RestaurantMS.Infrastructure.Migrations
                     b.Property<decimal>("CurrentStock")
                         .HasColumnType("decimal(10,2)");
 
+                    b.Property<bool>("IsArchived")
+                        .HasColumnType("tinyint(1)");
+
                     b.Property<DateTime>("LastUpdated")
                         .HasColumnType("datetime(6)");
 
@@ -252,6 +255,33 @@ namespace RestaurantMS.Infrastructure.Migrations
                     b.HasIndex("InventoryItemId");
 
                     b.ToTable("MenuItems");
+                });
+
+            modelBuilder.Entity("RestaurantMS.Core.Entities.MenuItemIngredient", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("InventoryItemId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("MenuItemId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("QuantityRequired")
+                        .HasColumnType("decimal(10,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InventoryItemId");
+
+                    b.HasIndex("MenuItemId", "InventoryItemId")
+                        .IsUnique();
+
+                    b.ToTable("MenuItemIngredients");
                 });
 
             modelBuilder.Entity("RestaurantMS.Core.Entities.Order", b =>
@@ -547,6 +577,25 @@ namespace RestaurantMS.Infrastructure.Migrations
                     b.Navigation("InventoryItem");
                 });
 
+            modelBuilder.Entity("RestaurantMS.Core.Entities.MenuItemIngredient", b =>
+                {
+                    b.HasOne("RestaurantMS.Core.Entities.InventoryItem", "InventoryItem")
+                        .WithMany()
+                        .HasForeignKey("InventoryItemId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("RestaurantMS.Core.Entities.MenuItem", "MenuItem")
+                        .WithMany("Ingredients")
+                        .HasForeignKey("MenuItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("InventoryItem");
+
+                    b.Navigation("MenuItem");
+                });
+
             modelBuilder.Entity("RestaurantMS.Core.Entities.Order", b =>
                 {
                     b.HasOne("RestaurantMS.Core.Entities.Table", "Table")
@@ -634,6 +683,8 @@ namespace RestaurantMS.Infrastructure.Migrations
 
             modelBuilder.Entity("RestaurantMS.Core.Entities.MenuItem", b =>
                 {
+                    b.Navigation("Ingredients");
+
                     b.Navigation("OrderItems");
                 });
 

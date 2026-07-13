@@ -16,7 +16,16 @@ namespace RestaurantMS.Infrastructure.Repositories
 
         public async Task<List<InventoryItem>> GetAllAsync()
         {
-            return await _context.InventoryItems.ToListAsync();
+            return await _context.InventoryItems
+                .Where(i => !i.IsArchived)
+                .ToListAsync();
+        }
+
+        public async Task<List<InventoryItem>> GetArchivedAsync()
+        {
+            return await _context.InventoryItems
+                .Where(i => i.IsArchived)
+                .ToListAsync();
         }
 
         public async Task<InventoryItem?> GetByIdAsync(int id)
@@ -27,7 +36,7 @@ namespace RestaurantMS.Infrastructure.Repositories
         public async Task<List<InventoryItem>> GetLowStockAsync()
         {
             return await _context.InventoryItems
-                .Where(i => i.CurrentStock <= i.MinimumStock)
+                .Where(i => !i.IsArchived && i.CurrentStock <= i.MinimumStock)
                 .ToListAsync();
         }
 
@@ -44,11 +53,36 @@ namespace RestaurantMS.Infrastructure.Repositories
             await _context.SaveChangesAsync();
         }
 
-        public async Task<bool> DeleteAsync(int id)
+        public async Task<bool> ArchiveAsync(int id)
+        {
+            var item = await _context.InventoryItems
+                .Include(i => i.MenuItems)
+                .FirstOrDefaultAsync(i => i.Id == id);
+
+            if (item == null) return false;
+
+            if (item.MenuItems.Any())
+            {
+                var linkedNames = string.Join(", ", item.MenuItems.Select(m => m.Name));
+                throw new InvalidOperationException(
+                    $"Cannot archive '{item.Name}' — it's still linked to menu item(s): {linkedNames}. " +
+                    "Unlink it from those menu items first."
+                );
+            }
+
+            item.IsArchived = true;
+            item.LastUpdated = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> UnarchiveAsync(int id)
         {
             var item = await _context.InventoryItems.FindAsync(id);
             if (item == null) return false;
-            _context.InventoryItems.Remove(item);
+
+            item.IsArchived = false;
+            item.LastUpdated = DateTime.UtcNow;
             await _context.SaveChangesAsync();
             return true;
         }

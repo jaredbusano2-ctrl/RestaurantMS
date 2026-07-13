@@ -41,7 +41,14 @@ namespace RestaurantMS.Core.Services
                 CategoryId = dto.CategoryId,
                 InventoryItemId = dto.InventoryItemId,
                 IsAvailable = dto.IsAvailable,
-                ImageUrl = dto.ImageUrl
+                ImageUrl = dto.ImageUrl,
+                Ingredients = (dto.Ingredients ?? new List<MenuItemIngredientDto>())
+                    .Where(i => i.InventoryItemId > 0 && i.QuantityRequired > 0)
+                    .Select(i => new MenuItemIngredient
+                    {
+                        InventoryItemId = i.InventoryItemId,
+                        QuantityRequired = i.QuantityRequired
+                    }).ToList()
             };
             await _menuRepository.AddAsync(item);
             return true;
@@ -60,6 +67,18 @@ namespace RestaurantMS.Core.Services
             item.IsAvailable = dto.IsAvailable;
             item.ImageUrl = dto.ImageUrl;
             item.UpdatedAt = DateTime.UtcNow;
+
+            // Replace the ingredient list entirely with what was submitted
+            item.Ingredients.Clear();
+            foreach (var ing in (dto.Ingredients ?? new List<MenuItemIngredientDto>())
+                         .Where(i => i.InventoryItemId > 0 && i.QuantityRequired > 0))
+            {
+                item.Ingredients.Add(new MenuItemIngredient
+                {
+                    InventoryItemId = ing.InventoryItemId,
+                    QuantityRequired = ing.QuantityRequired
+                });
+            }
 
             await _menuRepository.UpdateAsync(item);
             return true;
@@ -84,19 +103,50 @@ namespace RestaurantMS.Core.Services
             }).ToList();
         }
 
-        private static MenuItemResponseDto MapToDto(MenuItem item) => new()
+        private static bool HasSufficientStock(MenuItem item)
         {
-            Id = item.Id,
-            Name = item.Name,
-            Description = item.Description,
-            Price = item.Price,
-            Category = item.Category?.Name ?? string.Empty,
-            CategoryId = item.CategoryId,
-            InventoryItemId = item.InventoryItemId,
-            InventoryItemName = item.InventoryItem?.Name,
-            IsAvailable = item.IsAvailable,
-            ImageUrl = item.ImageUrl,
-            CreatedAt = item.CreatedAt
-        };
+            if (item.Ingredients != null && item.Ingredients.Any())
+            {
+                return item.Ingredients.All(ing =>
+                    ing.InventoryItem != null && ing.InventoryItem.CurrentStock >= ing.QuantityRequired);
+            }
+
+            if (item.InventoryItem != null)
+            {
+                return item.InventoryItem.CurrentStock > 0;
+            }
+
+            // No inventory tracking configured at all — treat as always in stock
+            return true;
+        }
+
+        private static MenuItemResponseDto MapToDto(MenuItem item)
+        {
+            var hasSufficientStock = HasSufficientStock(item);
+
+            return new MenuItemResponseDto
+            {
+                Id = item.Id,
+                Name = item.Name,
+                Description = item.Description,
+                Price = item.Price,
+                Category = item.Category?.Name ?? string.Empty,
+                CategoryId = item.CategoryId,
+                InventoryItemId = item.InventoryItemId,
+                InventoryItemName = item.InventoryItem?.Name,
+                // Manual toggle AND stock check both have to be true to actually show as available
+                IsAvailable = item.IsAvailable && hasSufficientStock,
+                IsOutOfStock = !hasSufficientStock,
+                ImageUrl = item.ImageUrl,
+                CreatedAt = item.CreatedAt,
+                Ingredients = item.Ingredients?.Select(i => new MenuItemIngredientResponseDto
+                {
+                    InventoryItemId = i.InventoryItemId,
+                    InventoryItemName = i.InventoryItem?.Name ?? string.Empty,
+                    Unit = i.InventoryItem?.Unit ?? string.Empty,
+                    QuantityRequired = i.QuantityRequired
+                }).ToList() ?? new List<MenuItemIngredientResponseDto>()
+            };
+        }
     }
 }

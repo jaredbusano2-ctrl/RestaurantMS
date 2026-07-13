@@ -28,5 +28,6 @@ namespace RestaurantMS.Core.Entities
 
         public virtual ICollection<MenuItem> MenuItems { get; set; } = new List<MenuItem>();
         public virtual ICollection<InventoryLog> InventoryLogs { get; set; } = new List<InventoryLog>();
+        public bool IsArchived { get; set; } = false;
     }
 }

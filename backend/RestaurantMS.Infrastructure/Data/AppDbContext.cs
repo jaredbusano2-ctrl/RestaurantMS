@@ -19,6 +19,7 @@ namespace RestaurantMS.Infrastructure.Data
         public DbSet<InventoryItem> InventoryItems { get; set; }
         public DbSet<InventoryLog> InventoryLogs { get; set; }
         public DbSet<AuditLog> AuditLogs { get; set; }
+        public DbSet<MenuItemIngredient> MenuItemIngredients { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -66,12 +67,31 @@ namespace RestaurantMS.Infrastructure.Data
                 .HasForeignKey(m => m.CategoryId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // MenuItem -> InventoryItem
+            // MenuItem -> InventoryItem (legacy single-item link, kept as fallback)
             modelBuilder.Entity<MenuItem>()
                 .HasOne(m => m.InventoryItem)
                 .WithMany(i => i.MenuItems)
                 .HasForeignKey(m => m.InventoryItemId)
                 .OnDelete(DeleteBehavior.SetNull);
+
+            // MenuItemIngredient -> MenuItem
+            modelBuilder.Entity<MenuItemIngredient>()
+                .HasOne(mi => mi.MenuItem)
+                .WithMany(m => m.Ingredients)
+                .HasForeignKey(mi => mi.MenuItemId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // MenuItemIngredient -> InventoryItem
+            modelBuilder.Entity<MenuItemIngredient>()
+                .HasOne(mi => mi.InventoryItem)
+                .WithMany()
+                .HasForeignKey(mi => mi.InventoryItemId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Prevent duplicate ingredient rows for the same menu item
+            modelBuilder.Entity<MenuItemIngredient>()
+                .HasIndex(mi => new { mi.MenuItemId, mi.InventoryItemId })
+                .IsUnique();
 
             // Bill -> Order (one-to-one)
             modelBuilder.Entity<Bill>()

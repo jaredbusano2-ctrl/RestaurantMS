@@ -35,12 +35,71 @@ const Dashboard = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const ordersPerPage = 5;
 
-  useEffect(() => {
-    fetchDashboardData();
-  }, []);
-
   const fetchDashboardData = async () => {
     try {
+      if (role === ROLES.CASHIER) {
+        const [paidBillsRes, readyRes, pendingRes] = await Promise.all([
+          axiosInstance
+            .get("/api/billing/paid")
+            .catch(() => ({ data: { data: [] } })),
+          axiosInstance
+            .get("/api/orders/status/Ready")
+            .catch(() => ({ data: { data: [] } })),
+          axiosInstance
+            .get("/api/orders/status/Pending")
+            .catch(() => ({ data: { data: [] } })),
+        ]);
+
+        const paidBills = paidBillsRes.data.data || [];
+        const readyOrders = readyRes.data.data || [];
+        const pendingOrders = pendingRes.data.data || [];
+
+        const todayStr = new Date().toDateString();
+        const todaysBills = paidBills.filter(
+          (b) => new Date(b.createdAt).toDateString() === todayStr,
+        );
+
+        setStats((prev) => ({
+          ...prev,
+          totalRevenue: todaysBills.reduce((sum, b) => sum + (b.total || 0), 0),
+          todayOrders: todaysBills.length,
+          readyOrders: readyOrders.length,
+          pendingOrders: pendingOrders.length,
+        }));
+
+        setLoading(false);
+        return;
+      }
+
+      if (role === ROLES.KITCHEN_STAFF) {
+        const [pendingRes, cookingRes, readyRes, lowStockRes] =
+          await Promise.all([
+            axiosInstance
+              .get("/api/orders/status/Pending")
+              .catch(() => ({ data: { data: [] } })),
+            axiosInstance
+              .get("/api/orders/status/Cooking")
+              .catch(() => ({ data: { data: [] } })),
+            axiosInstance
+              .get("/api/orders/status/Ready")
+              .catch(() => ({ data: { data: [] } })),
+            axiosInstance
+              .get("/api/inventory/low-stock")
+              .catch(() => ({ data: { data: [] } })),
+          ]);
+
+        setStats((prev) => ({
+          ...prev,
+          pendingOrders: (pendingRes.data.data || []).length,
+          cookingOrders: (cookingRes.data.data || []).length,
+          readyOrders: (readyRes.data.data || []).length,
+          lowStockItems: (lowStockRes.data.data || []).length,
+        }));
+
+        setLoading(false);
+        return;
+      }
+
       const promises = [];
 
       if (
@@ -99,7 +158,7 @@ const Dashboard = () => {
             )
             .catch(() => ({ data: { data: [] } })),
         );
-        // ✅ FIXED: was /api/reports/top-items, backend route is /api/reports/items
+
         promises.push(
           axiosInstance
             .get(
@@ -125,7 +184,10 @@ const Dashboard = () => {
       if (items && items.length > 0) {
         formattedTopItems = items.map((item) => ({
           itemName:
-            item.name || item.menuItemName || item.itemName || `Item ${item.id}`,
+            item.name ||
+            item.menuItemName ||
+            item.itemName ||
+            `Item ${item.id}`,
           totalQuantitySold:
             item.totalSold || item.quantity || item.totalQuantitySold || 0,
           totalRevenue: item.revenue || item.totalRevenue || 0,
@@ -165,7 +227,8 @@ const Dashboard = () => {
     orders.forEach((order) => {
       if (order.items && order.items.length > 0) {
         order.items.forEach((item) => {
-          const name = item.menuItemName || item.name || `Item ${item.menuItemId}`;
+          const name =
+            item.menuItemName || item.name || `Item ${item.menuItemId}`;
           if (!itemMap[name]) {
             itemMap[name] = {
               itemName: name,
@@ -174,7 +237,8 @@ const Dashboard = () => {
             };
           }
           itemMap[name].totalQuantitySold += item.quantity || 1;
-          itemMap[name].totalRevenue += (item.quantity || 1) * (item.unitPrice || 0);
+          itemMap[name].totalRevenue +=
+            (item.quantity || 1) * (item.unitPrice || 0);
         });
       }
     });
@@ -214,28 +278,9 @@ const Dashboard = () => {
     currentPage * ordersPerPage,
   );
 
-  const PaginationControls = () =>
-    totalPages > 1 && (
-      <div className="table-pagination">
-        <button
-          className="pagination-btn"
-          onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-          disabled={currentPage === 1}
-        >
-          <i className="ti ti-chevron-left" aria-hidden="true" />
-        </button>
-        <span className="pagination-info">
-          Page {currentPage} of {totalPages}
-        </span>
-        <button
-          className="pagination-btn"
-          onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-          disabled={currentPage === totalPages}
-        >
-          <i className="ti ti-chevron-right" aria-hidden="true" />
-        </button>
-      </div>
-    );
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
 
   return (
     <MainLayout>
@@ -475,7 +520,31 @@ const Dashboard = () => {
                     </tbody>
                   </table>
 
-                  <PaginationControls />
+                  {totalPages > 1 && (
+                    <div className="table-pagination">
+                      <button
+                        className="pagination-btn"
+                        onClick={() =>
+                          setCurrentPage((p) => Math.max(1, p - 1))
+                        }
+                        disabled={currentPage === 1}
+                      >
+                        <i className="ti ti-chevron-left" aria-hidden="true" />
+                      </button>
+                      <span className="pagination-info">
+                        Page {currentPage} of {totalPages}
+                      </span>
+                      <button
+                        className="pagination-btn"
+                        onClick={() =>
+                          setCurrentPage((p) => Math.min(totalPages, p + 1))
+                        }
+                        disabled={currentPage === totalPages}
+                      >
+                        <i className="ti ti-chevron-right" aria-hidden="true" />
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 <div className="dashboard-card flex-1">
@@ -698,7 +767,29 @@ const Dashboard = () => {
                   </tbody>
                 </table>
 
-                <PaginationControls />
+                {totalPages > 1 && (
+                  <div className="table-pagination">
+                    <button
+                      className="pagination-btn"
+                      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                      disabled={currentPage === 1}
+                    >
+                      <i className="ti ti-chevron-left" aria-hidden="true" />
+                    </button>
+                    <span className="pagination-info">
+                      Page {currentPage} of {totalPages}
+                    </span>
+                    <button
+                      className="pagination-btn"
+                      onClick={() =>
+                        setCurrentPage((p) => Math.min(totalPages, p + 1))
+                      }
+                      disabled={currentPage === totalPages}
+                    >
+                      <i className="ti ti-chevron-right" aria-hidden="true" />
+                    </button>
+                  </div>
+                )}
               </div>
             </>
           )}
@@ -771,13 +862,6 @@ const Dashboard = () => {
                       aria-hidden="true"
                     />
                     <span className="action-label">Billing & POS</span>
-                  </div>
-                  <div
-                    className="action-card"
-                    onClick={() => navigate("/orders")}
-                  >
-                    <i className="ti ti-files action-icon" aria-hidden="true" />
-                    <span className="action-label">View Orders</span>
                   </div>
                 </div>
               </div>
@@ -881,5 +965,4 @@ const Dashboard = () => {
     </MainLayout>
   );
 };
-
 export default Dashboard;

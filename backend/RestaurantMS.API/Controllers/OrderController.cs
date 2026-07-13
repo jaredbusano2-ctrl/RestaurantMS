@@ -19,7 +19,7 @@ namespace RestaurantMS.API.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Admin,SuperAdmin,Manager,Waiter,Cashier")]
+        [Authorize(Roles = "Admin,SuperAdmin,Manager,Waiter")]
         public async Task<IActionResult> GetAll()
         {
             try
@@ -64,7 +64,7 @@ namespace RestaurantMS.API.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Waiter,Admin,SuperAdmin")]
+        [Authorize(Roles = "Waiter,Admin,SuperAdmin,Manager")]
         public async Task<IActionResult> Create([FromBody] CreateOrderDto dto)
         {
             try
@@ -80,7 +80,7 @@ namespace RestaurantMS.API.Controllers
         }
 
         [HttpPut("{id}/status")]
-        [Authorize(Roles = "Waiter,KitchenStaff,Admin,SuperAdmin")]
+        [Authorize(Roles = "Waiter,KitchenStaff,Admin,SuperAdmin,Manager")]
         public async Task<IActionResult> UpdateStatus(int id, [FromBody] UpdateOrderStatusDto dto)
         {
             try

@@ -141,6 +141,19 @@ namespace RestaurantMS.Infrastructure.Data
                 .WithMany()
                 .HasForeignKey(al => al.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            // ==========================================
+            // FIX: Convert all table names to lowercase
+            // This fixes case sensitivity on Linux MySQL
+            // ==========================================
+            foreach (var entity in modelBuilder.Model.GetEntityTypes())
+            {
+                var tableName = entity.GetTableName();
+                if (tableName != null)
+                {
+                    entity.SetTableName(tableName.ToLowerInvariant());
+                }
+            }
         }
     }
 }

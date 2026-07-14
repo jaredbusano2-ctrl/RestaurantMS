@@ -13,7 +13,7 @@ import Modal from "../../components/Modal/Modal";
 import axiosInstance from "../../utils/axiosInstance";
 import "./Menu.css";
 
-const API_BASE = "http://localhost:5000";
+const API_BASE = "https://restaurantms-api-production.up.railway.app";
 
 const emptyIngredientRow = () => ({
   inventoryItemId: "",
